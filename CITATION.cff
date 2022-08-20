@@ -1,0 +1,84 @@
+cff-version: "1.2.0"
+title: "Three-dimensional microstructure generation using generative adversarial neural networks in the context of continuum micromechanics"
+message: "If you use this software, please cite both the article from preferred-citation and the software itself."
+type: "software"
+
+authors: 
+    - given-names: "Alexander"
+      family-names: "Henkes"
+      email: "a.henkes@tu-braunschweig.de"
+      affiliation: "TU Braunschweig"
+      orcid: "https://orcid.org/0000-0003-4615-9271"
+
+    - given-names: "Henning"
+      family-names: "Wessels"
+      email: "h.wessels@tu-braunschweig.de"
+      affiliation: "TU Braunschweig"
+      orcid: "https://orcid.org/0000-0002-2542-1130"
+
+version: "1.0"
+doi: "10.5281/zenodo.xxx"
+date-released: "2022-07-28"
+url: "https://github.com/ahenkes1/HENKES_SNN"
+
+preferred-citation:
+    authors:
+        - given-names: 'Alexander '
+          family-names: Henkes
+          email: a.henkes@tu-braunschweig.de
+          affiliation: TU Braunschweig
+          orcid: ' https://orcid.org/0000-0003-4615-9271'
+
+        - given-names: Henning
+          family-names: Wessels
+          email: h.wessels@tu-braunschweig.de
+          affiliation: TU Braunschweig
+          orcid: ' https://orcid.org/0000-0002-2542-1130 '
+
+    title: "XXX"
+    journal: "Computer Methods in Applied Mechanics and Engineering"
+    publisher:
+        name: "Elsevier"
+    year: "2022"
+    type: "article"
+    doi: "10.1016/j.cma.2022.115497"
+    url: "https://doi.org/10.1016/j.cma.2022.115497"
+
+references:
+    - type: "article"
+      authors: 
+        - name: "Hunter, J. D."
+      title: "Matplotlib: A 2D graphics environment"
+      journal: "Computing in Science and Engineering"
+      volume: "9"
+      number: "3"
+      pages: "90--95"
+      publisher: 
+        name: "IEEE COMPUTER SOC"
+      doi: "10.1109/MCSE.2007.55"
+      year: "2007"
+      
+    - type: "article"
+      title: "Array programming with NumPy"
+      authors:
+        - name: "Charles R. Harris and K. Jarrod Millman and Stefan J.
+                 van der Walt and Ralf Gommers and Pauli Virtanen and David
+                 Cournapeau and Eric Wieser and Julian Taylor and Sebastian
+                 Berg and Nathaniel J. Smith and Robert Kern and Matti Picus
+                 and Stephan Hoyer and Marten H. van Kerkwijk and Matthew
+                 Brett and Allan Haldane and Jaime Fernandez del
+                 Rio and Mark Wiebe and Pearu Peterson and Pierre
+                 Gerard-Marchant and Kevin Sheppard and Tyler Reddy and
+                 Warren Weckesser and Hameer Abbasi and Christoph Gohlke and
+                 Travis E. Oliphant"
+      year: "2020"
+      month: "9"
+      journal: "Nature"
+      volume: "585"
+      number: "7825"
+      pages: "357--362"
+      doi: "10.1038/s41586-020-2649-2"
+      publisher:
+        name: "Springer Science and Business Media LLC"
+      url: "https://doi.org/10.1038/s41586-020-2649-2"
+
