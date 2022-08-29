@@ -49,12 +49,17 @@ def get_input():
 def main(parser_args=None):
     """Main function for all numerical examples."""
     EXAMPLE = parser_args.example
+    DEVICE = (
+        torch.device("cuda")
+        if torch.cuda.is_available()
+        else torch.device("cpu")
+    )
 
     if EXAMPLE == "elasticity":
         raise NotImplementedError("This experiment does not exist.")
 
     elif EXAMPLE == "plasticity":
-        experiment_plasticity.main()
+        experiment_plasticity.main(device=DEVICE)
 
     else:
         raise NotImplementedError("This experiment does not exist.")

@@ -3,7 +3,7 @@ import dataset
 import model
 
 
-def main():
+def main(device):
     """Main function for the plasticity experiment."""
     YIELD_STRESS = 300
     ELASTIC_MODULUS = (2.1e5,)
@@ -40,10 +40,12 @@ def main():
         timesteps=TIMESTEPS,
     )
 
-    slstm = model.SLSTM(timesteps=TIMESTEPS, hidden=NUM_HIDDEN)
+    slstm = model.SLSTM(timesteps=TIMESTEPS, hidden=NUM_HIDDEN).to(
+        device=device
+    )
 
     return None
 
 
 if __name__ == "__main__":
-    main()
+    main(device="cpu")

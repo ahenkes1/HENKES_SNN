@@ -67,6 +67,18 @@ class SLSTM(torch.nn.Module):
             reset_mechanism="none",
         )
 
+        params = sum(param.numel() for param in self.parameters())
+        space = 20
+        print(
+            f"{79 * '='}\n"
+            f"{' ':<20}{'Norse_Network':^39}{' ':>20}\n"
+            f"{79 * '-'}\n"
+            f"{'Timesteps:':<{space}}{self.timesteps}\n"
+            f"{'Parameters:':<{space}}{params}\n"
+            f"{'Topology:':<{space}}\n{self}\n"
+            f"{79 * '='}"
+        )
+
     def forward(self, x):
         """Forward pass for several time steps."""
 
