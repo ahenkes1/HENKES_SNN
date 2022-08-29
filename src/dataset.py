@@ -6,11 +6,14 @@ import tqdm
 
 def isotropic_hardening(
     strains,
-    yield_stress=300,
-    elastic_modulus=2.1e5,
-    hardening_modulus=2.1e5 / 100,
+    yield_stress=torch.as_tensor(300),
+    elastic_modulus=torch.as_tensor(2.1e5),
+    hardening_modulus=torch.as_tensor(2.1e5 / 100),
 ):
     """1D isotropic hardening plasticity."""
+    yield_stress = torch.as_tensor(yield_stress)
+    elastic_modulus = torch.as_tensor(elastic_modulus)
+    hardening_modulus = torch.as_tensor(hardening_modulus)
 
     strain_plastic = torch.zeros(1)
     strain_plastic_equivalent = torch.zeros(1)
@@ -28,7 +31,7 @@ def isotropic_hardening(
         else:
             return 0
 
-    for index, strain in enumerate(strains):
+    for index, strain in enumerate(torch.squeeze(strains)):
         stress_trial = elastic_modulus * (strain - strain_plastic)
         yield_limit = (
             yield_stress + hardening_modulus * strain_plastic_equivalent
