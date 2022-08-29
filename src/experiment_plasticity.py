@@ -7,13 +7,13 @@ import trainer
 def main(device):
     """Main function for the plasticity experiment."""
     YIELD_STRESS = 300
-    ELASTIC_MODULUS = (2.1e5,)
-    HARDENING_MODULUS = (2.1e5 / 100,)
-    BATCH_SIZE = 32
+    ELASTIC_MODULUS = 2.1e5
+    HARDENING_MODULUS = 2.1e5 / 100
+    BATCH_SIZE = 100
     TIMESTEPS = 100
     NUM_SAMPLES_TRAIN = int(1e2)
-    NUM_SAMPLES_VAL = int(1e1)
-    NUM_SAMPLES_TEST = int(1e1)
+    NUM_SAMPLES_VAL = int(1e2)
+    NUM_SAMPLES_TEST = int(1e2)
     NUM_HIDDEN = 128
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 10
 
@@ -54,6 +54,12 @@ def main(device):
         optimizer="adamw",
         device=device,
         epochs=EPOCHS,
+    )
+
+    testing_results = trainer.test(
+        dataloader_test=data_test,
+        model=slstm,
+        device=device,
     )
 
     return None

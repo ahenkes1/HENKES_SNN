@@ -98,15 +98,6 @@ def training(
                 loss_epoch_train.append(loss_train.item())
                 minibatch_counter_train += 1
 
-                pbar.set_postfix(
-                    l_train=loss_train.item(),
-                    r_train=rel_err_train.item(),
-                    e_train=rel_err_end_train.item(),
-                    l_val=loss_val.item(),
-                    r_val=rel_err_val.item(),
-                    e_val=rel_err_end_val.item(),
-                )
-
             minibatch_counter_val = 0
             loss_epoch_val = []
             val_batch = iter(dataloader_val)
@@ -137,29 +128,20 @@ def training(
                 loss_epoch_val.append(loss_val.item())
                 minibatch_counter_val += 1
 
-                pbar.set_postfix(
-                    l_train=loss_train.item(),
-                    r_train=rel_err_train.item(),
-                    e_train=rel_err_end_train.item(),
-                    l_val=loss_val.item(),
-                    r_val=rel_err_val.item(),
-                    e_val=rel_err_end_val.item(),
-                )
-
             avg_batch_loss_train = (
                 sum(loss_epoch_train) / minibatch_counter_train
             )
             avg_batch_loss_val = sum(loss_epoch_val) / minibatch_counter_val
 
-        if min_valid_loss > avg_batch_loss_val:
-            print(
-                f"Validation Loss Decreased({min_valid_loss:.6f\
-            }--->{avg_batch_loss_train:.6f}) \t Saving The Model"
+            pbar.set_postfix(
+                loss_train=avg_batch_loss_train,
+                loss_val=avg_batch_loss_val,
             )
-            min_valid_loss = avg_batch_loss_val
 
-            # Saving State Dict
-            torch.save(model.state_dict(), "./saved_model/saved_model.pth")
+            if min_valid_loss > avg_batch_loss_val:
+                torch.save(model.state_dict(), "./saved_model/saved_model.pth")
+            else:
+                pass
 
     print(f"{79 * '='}")
 
