@@ -9,13 +9,13 @@ def main(device):
     YIELD_STRESS = 300
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
-    BATCH_SIZE = 100
+    BATCH_SIZE = 1
     TIMESTEPS = 100
     NUM_SAMPLES_TRAIN = int(1e2)
-    NUM_SAMPLES_VAL = int(1e2)
-    NUM_SAMPLES_TEST = int(1e2)
+    NUM_SAMPLES_VAL = NUM_SAMPLES_TRAIN // 10
+    NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     NUM_HIDDEN = 128
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 10
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1
 
     data_train = dataset.plasticity(
         yield_stress=YIELD_STRESS,
@@ -60,6 +60,13 @@ def main(device):
         dataloader_test=data_test,
         model=slstm,
         device=device,
+    )
+
+    prediction = trainer.predict(
+        dataloader_test=data_test,
+        model=slstm,
+        device=device,
+        timesteps=TIMESTEPS,
     )
 
     return None

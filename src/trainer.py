@@ -213,7 +213,7 @@ def test(model, device, dataloader_test):
     }
 
 
-def predict(model, strain, stress, device, timesteps):
+def predict(model, device, timesteps, dataloader_test):
     """Carry out predictions with model on data."""
 
     space = 20
@@ -221,22 +221,32 @@ def predict(model, strain, stress, device, timesteps):
         f"{79 * '='}\n" f"{' ':<20}{'Predicting':^39}{' ':>20}\n" f"{79 * '-'}"
     )
 
+    test_batch = iter(dataloader_test)
+    strain, stress = next(test_batch)
+
+    strain = torch.unsqueeze(strain[0, :, :], 0)
+    stress = torch.unsqueeze(stress[0, :, :], 0)
+
     with torch.no_grad():
         model.eval()
 
-        strain = strain.to(device)
-        stress = stress.to(device)
+        feature = torch.swapaxes(input=strain, axis0=0, axis1=1)
+        label = torch.swapaxes(input=stress, axis0=0, axis1=1)
 
-        out, _ = model(strain.view(timesteps, 1, 1))
+        feature = feature.to(device)
+        label = label.to(device)
 
-    prediction = out
-    abs_error = torch.linalg.norm(stress - prediction)
+        out_dict = model(feature)
+        mem = out_dict["membrane_potential"]
 
-    stress = torch.squeeze(stress).cpu().numpy().tolist()
+    prediction = mem
+    abs_error = torch.linalg.norm(label - prediction)
+
+    label = torch.squeeze(label).cpu().numpy().tolist()
     prediction = torch.squeeze(prediction).cpu().numpy().tolist()
 
-    for idx, element in enumerate(stress):
-        stress[idx] = "{:1.4e}".format(element)
+    for idx, element in enumerate(label):
+        label[idx] = "{:1.4e}".format(element)
 
     for idx, element in enumerate(prediction):
         prediction[idx] = "{:1.4e}".format(element)
@@ -245,10 +255,10 @@ def predict(model, strain, stress, device, timesteps):
         f"{'L1 error:':<{space}}{abs_error:1.2e}\n\n"
         f"{'True':<{16}}{'Prediction':<{16}}"
     )
-    pprint.pprint(list(zip(stress, prediction)))
+    pprint.pprint(list(zip(label, prediction)))
     print(f"{79 * '='}")
 
-    return out
+    return {"prediction": prediction, "true": label}
 
 
 if __name__ == "__main__":
