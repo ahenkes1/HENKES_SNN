@@ -1,7 +1,9 @@
 """Plasticity using SNN. Section ...."""
 import dataset
 import model
+import matplotlib.pyplot as plt
 import trainer
+import torch
 
 
 def main(device):
@@ -10,6 +12,7 @@ def main(device):
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
     BATCH_SIZE = 1024
+    PREDICTION_SIZE = 10
     TIMESTEPS = 100
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_VAL = BATCH_SIZE
@@ -17,14 +20,26 @@ def main(device):
     NUM_HIDDEN = 128
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 200
 
-    data_train = dataset.plasticity(
+    data_train_dict = dataset.plasticity(
         yield_stress=YIELD_STRESS,
         elastic_modulus=ELASTIC_MODULUS,
         hardening_modulus=HARDENING_MODULUS,
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_TRAIN,
         timesteps=TIMESTEPS,
+        mean_strain=None,
+        std_strain=None,
+        mean_stress=None,
+        std_stress=None,
     )
+    data_train = data_train_dict["dataloader"]
+
+    statistics = data_train_dict["statistics"]
+    mean_strain = statistics["mean_strain"]
+    std_strain = statistics["std_strain"]
+    mean_stress = statistics["mean_stress"]
+    std_stress = statistics["std_stress"]
+
     data_val = dataset.plasticity(
         yield_stress=YIELD_STRESS,
         elastic_modulus=ELASTIC_MODULUS,
@@ -32,7 +47,11 @@ def main(device):
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_VAL,
         timesteps=TIMESTEPS,
-    )
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )["dataloader"]
     data_test = dataset.plasticity(
         yield_stress=YIELD_STRESS,
         elastic_modulus=ELASTIC_MODULUS,
@@ -40,7 +59,11 @@ def main(device):
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_TEST,
         timesteps=TIMESTEPS,
-    )
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )["dataloader"]
 
     slstm = model.SLSTM(timesteps=TIMESTEPS, hidden=NUM_HIDDEN).to(
         device=device
@@ -56,6 +79,8 @@ def main(device):
         epochs=EPOCHS,
     )
 
+    slstm.load_state_dict(torch.load("./saved_model/saved_model.pth"))
+
     testing_results = trainer.test(
         dataloader_test=data_test,
         model=slstm,
@@ -66,8 +91,35 @@ def main(device):
         dataloader_test=data_test,
         model=slstm,
         device=device,
-        timesteps=TIMESTEPS,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+        num_samples=PREDICTION_SIZE,
     )
+
+    torch.save(
+        {
+            "training_hist": training_hist,
+            "testing_results": testing_results,
+            "prediction": prediction,
+        },
+        "./saved_model/save",
+    )
+
+    plt.figure(0)
+    for i in range(PREDICTION_SIZE):
+        plt.plot(
+            prediction["strain"][:, i],
+            prediction["true"][:, i],
+            color="black",
+        )
+        plt.plot(
+            prediction["strain"][:, i],
+            prediction["prediction"][:, i],
+            color="red",
+        )
+    plt.savefig("./saved_model/prediction.png")
 
     return None
 

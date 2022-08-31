@@ -2,7 +2,6 @@
 import statistics
 import torch
 import tqdm
-import pprint
 
 
 def training(
@@ -213,7 +212,16 @@ def test(model, device, dataloader_test):
     }
 
 
-def predict(model, device, timesteps, dataloader_test):
+def predict(
+    model,
+    device,
+    dataloader_test,
+    mean_strain,
+    std_strain,
+    mean_stress,
+    std_stress,
+    num_samples,
+):
     """Carry out predictions with model on data."""
 
     space = 20
@@ -222,10 +230,17 @@ def predict(model, device, timesteps, dataloader_test):
     )
 
     test_batch = iter(dataloader_test)
-    strain, stress = next(test_batch)
+    strain_norm, stress_norm = next(test_batch)
 
-    strain = torch.unsqueeze(strain[0, :, :], 0)
-    stress = torch.unsqueeze(stress[0, :, :], 0)
+    strain_norm = strain_norm[0:num_samples, :, :]
+    stress_norm = stress_norm[0:num_samples, :, :]
+
+    if len(strain_norm.shape) == 2:
+        strain_norm = torch.unsqueeze(strain_norm, 0)
+        stress_norm = torch.unsqueeze(stress_norm, 0)
+
+    strain = (strain_norm * std_strain) + mean_strain
+    stress = (stress_norm * std_stress) + mean_stress
 
     with torch.no_grad():
         model.eval()
@@ -242,23 +257,14 @@ def predict(model, device, timesteps, dataloader_test):
     prediction = mem
     abs_error = torch.linalg.norm(label - prediction)
 
-    label = torch.squeeze(label).cpu().numpy().tolist()
-    prediction = torch.squeeze(prediction).cpu().numpy().tolist()
+    feature = torch.squeeze(feature).cpu().numpy()
+    label = torch.squeeze(label).cpu().numpy()
+    prediction = torch.squeeze(prediction).cpu().numpy()
 
-    for idx, element in enumerate(label):
-        label[idx] = "{:1.4e}".format(element)
-
-    for idx, element in enumerate(prediction):
-        prediction[idx] = "{:1.4e}".format(element)
-
-    print(
-        f"{'L1 error:':<{space}}{abs_error:1.2e}\n\n"
-        f"{'True':<{16}}{'Prediction':<{16}}"
-    )
-    pprint.pprint(list(zip(label, prediction)))
+    print(f"{'L1 error:':<{space}}{abs_error:1.2e}")
     print(f"{79 * '='}")
 
-    return {"prediction": prediction, "true": label}
+    return {"strain": feature, "prediction": prediction, "true": label}
 
 
 if __name__ == "__main__":
