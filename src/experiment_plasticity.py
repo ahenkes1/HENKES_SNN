@@ -14,7 +14,7 @@ def main(device):
     NUM_SAMPLES_TRAIN = int(1e4)
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    NUM_HIDDEN = 512
+    NUM_HIDDEN = 128
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 100
 
     data_train = dataset.plasticity(

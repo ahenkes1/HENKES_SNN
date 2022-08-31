@@ -1,6 +1,6 @@
 """Neural networks for all experiments."""
 import snntorch
-import snntorch.surrogate
+from snntorch import surrogate
 import torch
 
 
@@ -12,7 +12,7 @@ class SLSTM(torch.nn.Module):
         self.timesteps = timesteps
         self.hidden = hidden
 
-        spike_grad = snntorch.surrogate.fast_sigmoid()
+        spike_grad = surrogate.atan()
 
         thr_lstm_1 = torch.rand(self.hidden)
         self.slstm_1 = snntorch.SLSTM(
@@ -74,6 +74,7 @@ class SLSTM(torch.nn.Module):
             f"{79 * '='}\n"
             f"{' ':<20}{'SLSTM':^39}{' ':>20}\n"
             f"{79 * '-'}\n"
+            f"{'Snntorch:':<{space}}{snntorch.__version__}\n"
             f"{'Timesteps:':<{space}}{self.timesteps}\n"
             f"{'Parameters:':<{space}}{params}\n"
             f"{'Topology:':<{space}}\n{self}\n"
