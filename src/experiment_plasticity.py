@@ -18,7 +18,7 @@ def main(device):
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     NUM_HIDDEN = 128
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 200
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1000
 
     data_train_dict = dataset.plasticity(
         yield_stress=YIELD_STRESS,
