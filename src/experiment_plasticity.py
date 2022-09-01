@@ -13,8 +13,8 @@ def main(device):
     HARDENING_MODULUS = 2.1e5 / 100
     BATCH_SIZE = 1024
     PREDICTION_SIZE = 10
-    TIMESTEPS = 100
-    NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
+    TIMESTEPS = 10
+    NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     NUM_HIDDEN = 128
@@ -120,6 +120,11 @@ def main(device):
             color="red",
         )
     plt.savefig("./saved_model/prediction.png")
+
+    plt.figure(1)
+    plt.semilogy(training_hist["epoch_loss_train"], label="train")
+    plt.semilogy(training_hist["epoch_loss_val"], label="val")
+    plt.savefig("./saved_model/loss.png")
 
     return None
 

@@ -50,6 +50,9 @@ def training(
     rel_err_val_lst = []
     rel_err_end_val_lst = []
 
+    epoch_loss_train = []
+    epoch_loss_val = []
+
     space = 20
     print(
         f"{79 * '='}\n"
@@ -132,6 +135,9 @@ def training(
             )
             avg_batch_loss_val = sum(loss_epoch_val) / minibatch_counter_val
 
+            epoch_loss_train.append(avg_batch_loss_train)
+            epoch_loss_val.append(avg_batch_loss_val)
+
             pbar.set_postfix(
                 loss_train=avg_batch_loss_train,
                 loss_val=avg_batch_loss_val,
@@ -151,6 +157,8 @@ def training(
         "loss_mse_val": loss_mse_val_lst,
         "rel_err_val": rel_err_val_lst,
         "rel_err_end_val": rel_err_end_val_lst,
+        "epoch_loss_train": epoch_loss_train,
+        "epoch_loss_val": epoch_loss_val,
     }
 
 
@@ -254,7 +262,7 @@ def predict(
         out_dict = model(feature)
         mem = out_dict["membrane_potential"]
 
-    prediction = mem
+    prediction = (mem * std_stress) + mean_stress
     abs_error = torch.linalg.norm(label - prediction)
 
     feature = torch.squeeze(feature).cpu().numpy()
