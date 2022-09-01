@@ -247,13 +247,12 @@ def predict(
         strain_norm = torch.unsqueeze(strain_norm, 0)
         stress_norm = torch.unsqueeze(stress_norm, 0)
 
-    strain = (strain_norm * std_strain) + mean_strain
     stress = (stress_norm * std_stress) + mean_stress
 
     with torch.no_grad():
         model.eval()
 
-        feature = torch.swapaxes(input=strain, axis0=0, axis1=1)
+        feature = torch.swapaxes(input=strain_norm, axis0=0, axis1=1)
         label = torch.swapaxes(input=stress, axis0=0, axis1=1)
 
         feature = feature.to(device)
@@ -263,13 +262,12 @@ def predict(
         mem = out_dict["membrane_potential"]
 
     prediction = (mem * std_stress) + mean_stress
-    abs_error = torch.linalg.norm(label - prediction)
+    strain = (feature * std_strain) + mean_strain
 
-    feature = torch.squeeze(feature).cpu().numpy()
+    feature = torch.squeeze(strain).cpu().numpy()
     label = torch.squeeze(label).cpu().numpy()
     prediction = torch.squeeze(prediction).cpu().numpy()
 
-    print(f"{'L1 error:':<{space}}{abs_error:1.2e}")
     print(f"{79 * '='}")
 
     return {"strain": feature, "prediction": prediction, "true": label}
