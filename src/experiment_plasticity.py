@@ -14,13 +14,13 @@ def main(device):
     HARDENING_MODULUS = 2.1e5 / 100
     BATCH_SIZE = 1024
     PREDICTION_SIZE = 10
-    TIMESTEPS = 100
+    TIMESTEPS = 10
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     # NUM_HIDDEN = 32
     # NUM_OUTPUT = NUM_HIDDEN
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE  # * 500
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
 
     data_train_dict = dataset.plasticity(
         yield_stress=YIELD_STRESS,
@@ -75,7 +75,7 @@ def main(device):
         for hidden in [16, 32, 64, 128, 256]:
             savepath = (
                 "./saved_model/"
-                + "_out_"
+                + "out_"
                 + str(out)
                 + "_hidden_"
                 + str(hidden)
@@ -147,12 +147,12 @@ def main(device):
                     prediction["prediction"][:, i],
                     color="red",
                 )
-            plt.savefig("./saved_model/prediction.png")
+            plt.savefig(savepath + "prediction.png")
 
             plt.figure(1)
             plt.semilogy(training_hist["epoch_loss_train"], label="train")
             plt.semilogy(training_hist["epoch_loss_val"], label="val")
-            plt.savefig("./saved_model/loss.png")
+            plt.savefig(savepath + "loss.png")
 
     return None
 
