@@ -12,6 +12,7 @@ def training(
     device,
     epochs,
     optimizer,
+    savepath,
 ):
     model.train(mode=True)
 
@@ -144,7 +145,7 @@ def training(
             )
 
             if min_valid_loss > avg_batch_loss_val:
-                torch.save(model.state_dict(), "./saved_model/saved_model.pth")
+                torch.save(model.state_dict(), savepath)
             else:
                 pass
 
@@ -234,7 +235,9 @@ def predict(
 
     space = 20
     print(
-        f"{79 * '='}\n" f"{' ':<20}{'Predicting':^39}{' ':>20}\n" f"{79 * '-'}"
+        f"{79 * '='}\n"
+        f"{' ':<{space}}{'Predicting':^39}{' ':>{space}}\n"
+        f"{79 * '-'}"
     )
 
     test_batch = iter(dataloader_test)

@@ -7,10 +7,11 @@ import torch
 class SLSTM(torch.nn.Module):
     """Simple spiking neural network in snntorch."""
 
-    def __init__(self, timesteps, hidden):
+    def __init__(self, timesteps, hidden, num_output):
         super().__init__()
         self.timesteps = timesteps
         self.hidden = hidden
+        self.num_output = num_output
 
         spike_grad = surrogate.atan()
 
@@ -56,9 +57,9 @@ class SLSTM(torch.nn.Module):
             reset_mechanism="none",
         )
 
-        beta_out2 = torch.rand(self.hidden)
-        thr_out2 = torch.rand(self.hidden)
-        self.fc2 = torch.nn.Linear(self.hidden, out_features=self.hidden)
+        beta_out2 = torch.rand(self.num_output)
+        thr_out2 = torch.rand(self.num_output)
+        self.fc2 = torch.nn.Linear(self.hidden, out_features=self.num_output)
         self.lif2 = snntorch.Leaky(
             beta=beta_out2,
             threshold=thr_out2,
