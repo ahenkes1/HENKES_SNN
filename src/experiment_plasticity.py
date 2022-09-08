@@ -224,7 +224,6 @@ def main(device):
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
     BATCH_SIZE = 1024
-    # PREDICTION_SIZE = 10
     TIMESTEPS = 100
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_VAL = BATCH_SIZE
@@ -288,14 +287,14 @@ def main(device):
         std_stress=std_stress,
     )["dataloader"]
 
-    convergence(
-        device=device,
-        data_train=data_train,
-        data_val=data_val,
-        data_test=data_test,
-        timesteps=TIMESTEPS,
-        epochs=EPOCHS,
-    )
+    # convergence(
+    #    device=device,
+    #    data_train=data_train,
+    #    data_val=data_val,
+    #    data_test=data_test,
+    #    timesteps=TIMESTEPS,
+    #    epochs=EPOCHS,
+    # )
 
     comparison(
         device=device,
