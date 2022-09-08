@@ -128,8 +128,72 @@ class SLSTM(torch.nn.Module):
         }
 
 
+class LSTM(torch.nn.Module):
+    """Simple spiking neural network in snntorch."""
+
+    def __init__(self, timesteps, hidden):
+        super().__init__()
+        self.timesteps = timesteps
+        self.hidden = hidden
+
+        self.lstm_1 = torch.nn.LSTMCell(
+            input_size=1,
+            hidden_size=self.hidden,
+        )
+
+        self.lstm_2 = torch.nn.LSTMCell(
+            input_size=self.hidden,
+            hidden_size=self.hidden,
+        )
+
+        self.lstm_3 = torch.nn.LSTMCell(
+            input_size=self.hidden,
+            hidden_size=1,
+        )
+
+        params = sum(param.numel() for param in self.parameters())
+        space = 20
+        print(
+            f"{79 * '='}\n"
+            f"{' ':<20}{'LSTM':^39}{' ':>20}\n"
+            f"{79 * '-'}\n"
+            f"{'Torch:':<{space}}{torch.__version__}\n"
+            f"{'Timesteps:':<{space}}{self.timesteps}\n"
+            f"{'Parameters:':<{space}}{params}\n"
+            f"{'Topology:':<{space}}\n{self}\n"
+            f"{79 * '='}"
+        )
+
+    def forward(self, x):
+        """Forward pass for several time steps."""
+        batch = x.shape[1]
+        hx1 = torch.rand(batch, self.hidden)
+        cx1 = torch.rand(batch, self.hidden)
+
+        hx2 = torch.rand(batch, self.hidden)
+        cx2 = torch.rand(batch, self.hidden)
+
+        hx3 = torch.rand(batch, 1)
+        cx3 = torch.rand(batch, 1)
+
+        output = []
+        for step in range(self.timesteps):
+            x_timestep = x[step, :, :]
+            hx1, cx1 = self.lstm_1(x_timestep, (hx1, cx1))
+            hx2, cx2 = self.lstm_2(hx1, (hx2, cx2))
+            hx3, cx3 = self.lstm_3(hx2, (hx3, cx3))
+            output.append(hx3)
+
+        output = torch.stack(output, dim=0)
+
+        return {"membrane_potential": output}
+
+
 def main():
     """Main function for model.py"""
+    slstm = SLSTM(timesteps=10, hidden=256, num_output=64)
+    lstm = LSTM(timesteps=10, hidden=341)
+    print(slstm, lstm)
     return None
 
 
