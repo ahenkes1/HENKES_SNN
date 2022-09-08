@@ -145,6 +145,77 @@ class Regression_dataset(torch.utils.data.Dataset):
             self.features = strain_norm
             self.labels = stress_norm
 
+        elif mode == "ramberg_osgood":
+
+            with tqdm.trange(num_samples) as pbar:
+                for _ in pbar:
+                    MAX_STRAIN = float(torch.rand(1)) * 1e-2
+                    ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
+
+                    strain = torch.linspace(
+                        start=0.0, end=MAX_STRAIN, steps=timesteps
+                    )
+                    strain = torch.unsqueeze(strain, -1)
+
+                    stress = torch.Tensor(ELASTIC_MODULUS * strain)
+
+                    strain_lst.append(strain)
+                    stress_lst.append(stress)
+
+            strain_lst = torch.stack(strain_lst, dim=1)
+            stress_lst = torch.stack(stress_lst, dim=1)
+
+            if mean_strain is None:
+                print("Calculate mean and std!")
+                std_strain, mean_strain = torch.std_mean(strain_lst)
+                std_stress, mean_stress = torch.std_mean(stress_lst)
+
+                self.mean_strain = mean_strain
+                self.std_strain = std_strain
+
+                self.mean_stress = mean_stress
+                self.std_stress = std_stress
+
+        elif mode == "elasticity":
+
+            with tqdm.trange(num_samples) as pbar:
+                for _ in pbar:
+                    MAX_STRAIN = float(torch.rand(1)) * 1e-2
+                    ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
+
+                    strain = torch.linspace(
+                        start=0.0, end=MAX_STRAIN, steps=timesteps
+                    )
+                    strain = torch.unsqueeze(strain, -1)
+
+                    stress = torch.Tensor(ELASTIC_MODULUS * strain)
+
+                    strain_lst.append(strain)
+                    stress_lst.append(stress)
+
+            strain_lst = torch.stack(strain_lst, dim=1)
+            stress_lst = torch.stack(stress_lst, dim=1)
+
+            if mean_strain is None:
+                print("Calculate mean and std!")
+                std_strain, mean_strain = torch.std_mean(strain_lst)
+                std_stress, mean_stress = torch.std_mean(stress_lst)
+
+                self.mean_strain = mean_strain
+                self.std_strain = std_strain
+
+                self.mean_stress = mean_stress
+                self.std_stress = std_stress
+
+            else:
+                print("Using pre-defined mean and std!")
+
+            strain_norm = (strain_lst - self.mean_strain) / self.std_strain
+            stress_norm = (stress_lst - self.mean_stress) / self.std_stress
+
+            self.features = strain_norm
+            self.labels = stress_norm
+
         else:
             raise NotImplementedError()
 
@@ -218,17 +289,146 @@ def plasticity(
     return {"dataloader": dataloader, "statistics": statistics}
 
 
+def ramberg_osgood(
+    yield_stress=None,
+    elastic_modulus=None,
+    hardening_modulus=None,
+    batch_size=1,
+    num_samples=1,
+    timesteps=10,
+    mean_strain=None,
+    std_strain=None,
+    mean_stress=None,
+    std_stress=None,
+):
+    """Create dataset and dataloader for the Ramberg-Osgood case."""
+    print(f"{79 * '='}\n" f"{' ':<20}{'Dataset':^39}{' ':>20}")
+    dataset = Regression_dataset(
+        timesteps=timesteps,
+        num_samples=num_samples,
+        mode="ramberg_osgood",
+        yield_stress=yield_stress,
+        elastic_modulus=elastic_modulus,
+        hardening_modulus=hardening_modulus,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )
+
+    statistics = dataset.statistics()
+
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
+        drop_last=True,
+        shuffle=True,
+    )
+
+    space = 20
+    print(
+        f"{79 * '-'}\n"
+        f"{'samples:':<{space}}{num_samples}\n"
+        f"{'timesteps:':<{space}}{timesteps}\n"
+        f"{'Youngs modulus:':<{space}}{elastic_modulus}\n"
+        f"{'batch size:':<{space}}{batch_size}\n"
+        f"{'shuffle:':<{space}}{True}\n"
+        f"{79 * '='}"
+    )
+
+    return {"dataloader": dataloader, "statistics": statistics}
+
+
+def elasticity(
+    yield_stress=None,
+    elastic_modulus=None,
+    hardening_modulus=None,
+    batch_size=1,
+    num_samples=1,
+    timesteps=10,
+    mean_strain=None,
+    std_strain=None,
+    mean_stress=None,
+    std_stress=None,
+):
+    """Create dataset and dataloader for the elasticity case."""
+    print(f"{79 * '='}\n" f"{' ':<20}{'Dataset':^39}{' ':>20}")
+    dataset = Regression_dataset(
+        timesteps=timesteps,
+        num_samples=num_samples,
+        mode="elasticity",
+        yield_stress=yield_stress,
+        elastic_modulus=elastic_modulus,
+        hardening_modulus=hardening_modulus,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )
+
+    statistics = dataset.statistics()
+
+    dataloader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        batch_size=batch_size,
+        drop_last=True,
+        shuffle=True,
+    )
+
+    space = 20
+    print(
+        f"{79 * '-'}\n"
+        f"{'samples:':<{space}}{num_samples}\n"
+        f"{'timesteps:':<{space}}{timesteps}\n"
+        f"{'Youngs modulus:':<{space}}{elastic_modulus}\n"
+        f"{'batch size:':<{space}}{batch_size}\n"
+        f"{'shuffle:':<{space}}{True}\n"
+        f"{79 * '='}"
+    )
+
+    return {"dataloader": dataloader, "statistics": statistics}
+
+
 def main():
     """Main script for dataset module."""
+    import csv
+    from functools import reduce
+
     dataloader = plasticity(
         yield_stress=300,
         elastic_modulus=2.1e5,
         hardening_modulus=2.1e5 / 100,
         batch_size=1,
-        num_samples=1,
-        timesteps=10,
+        num_samples=5,
+        timesteps=100,
     )
-    print(next(iter(dataloader)))
+
+    with open(file=r"./saved_model/plasticity.csv", mode="a") as file:
+        writer = csv.writer(file)
+        writer.writerow(["strain-stress"])
+
+    statistics = dataloader["statistics"]
+    mean_strain, std_strain, mean_stress, std_stress = statistics.values()
+
+    dataloader = iter(dataloader["dataloader"])
+    for sample in range(5):
+        strain, stress = next(dataloader)
+
+        strain = (strain * std_strain) + mean_strain
+        stress = (stress * std_stress) + mean_stress
+
+        strain = strain.cpu().tolist()[0]
+        stress = stress.cpu().tolist()[0]
+
+        strain = reduce(lambda x, y: x + y, strain)
+        stress = reduce(lambda x, y: x + y, stress)
+
+        entry = list(zip(strain, stress))
+
+        with open(file=r"./saved_model/plasticity.csv", mode="a") as file:
+            writer = csv.writer(file)
+            writer.writerow(entry)
+
     return None
 
 
