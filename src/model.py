@@ -131,11 +131,10 @@ class SLSTM(torch.nn.Module):
 class LSTM(torch.nn.Module):
     """Simple spiking neural network in snntorch."""
 
-    def __init__(self, timesteps, hidden, num_output):
+    def __init__(self, timesteps, hidden):
         super().__init__()
         self.timesteps = timesteps
         self.hidden = hidden
-        self.num_output = num_output
 
         self.lstm_1 = torch.nn.LSTMCell(
             input_size=1,
@@ -149,19 +148,14 @@ class LSTM(torch.nn.Module):
 
         self.lstm_3 = torch.nn.LSTMCell(
             input_size=self.hidden,
-            hidden_size=self.hidden,
+            hidden_size=1,
         )
-
-        self.fc1 = torch.nn.Linear(self.hidden, out_features=self.hidden)
-        self.a_1 = torch.nn.LeakyReLU()
-
-        self.fc2 = torch.nn.Linear(self.hidden, out_features=self.num_output)
 
         params = sum(param.numel() for param in self.parameters())
         space = 20
         print(
             f"{79 * '='}\n"
-            f"{' ':<20}{'SLSTM':^39}{' ':>20}\n"
+            f"{' ':<20}{'LSTM':^39}{' ':>20}\n"
             f"{79 * '-'}\n"
             f"{'Torch:':<{space}}{torch.__version__}\n"
             f"{'Timesteps:':<{space}}{self.timesteps}\n"
@@ -172,63 +166,34 @@ class LSTM(torch.nn.Module):
 
     def forward(self, x):
         """Forward pass for several time steps."""
+        batch = x.shape[1]
+        hx1 = torch.rand(batch, self.hidden)
+        cx1 = torch.rand(batch, self.hidden)
 
-        TODO
-        """
-        rnn = nn.LSTMCell(10, 20) # (input_size, hidden_size)
-        input = torch.randn(2, 3, 10) # (time_steps, batch, input_size)
-        hx = torch.randn(3, 20) # (batch, hidden_size)
-        cx = torch.randn(3, 20)
+        hx2 = torch.rand(batch, self.hidden)
+        cx2 = torch.rand(batch, self.hidden)
+
+        hx3 = torch.rand(batch, 1)
+        cx3 = torch.rand(batch, 1)
+
         output = []
-        for i in range(input.size()[0]):
-        output = torch.stack(output, dim=0)
-        """
-
-        syn_lstm_1, mem_lstm_1 = self.slstm_1.init_slstm()
-        syn_lstm_2, mem_lstm_2 = self.slstm_2.init_slstm()
-        syn_lstm_3, mem_lstm_3 = self.slstm_3.init_slstm()
-
-        mem_out = self.lif1.init_leaky()
-        mem_out2 = self.lif2.init_leaky()
-
-        cur_out_rec = []
-        mem_out_rec = []
-        spk_out_rec = []
-
         for step in range(self.timesteps):
             x_timestep = x[step, :, :]
+            hx1, cx1 = self.lstm_1(x_timestep, (hx1, cx1))
+            hx2, cx2 = self.lstm_2(hx1, (hx2, cx2))
+            hx3, cx3 = self.lstm_3(hx2, (hx3, cx3))
+            output.append(hx3)
 
-            spk_lstm_1, syn_lstm_1, mem_lstm_1 = self.slstm_1(
-                x_timestep, syn_lstm_1, mem_lstm_1
-            )
-            spk_lstm_2, syn_lstm_2, mem_lstm_2 = self.slstm_2(
-                spk_lstm_1, syn_lstm_2, mem_lstm_2
-            )
-            spk_lstm_3, syn_lstm_3, mem_lstm_3 = self.slstm_3(
-                spk_lstm_2, syn_lstm_3, mem_lstm_3
-            )
+        output = torch.stack(output, dim=0)
 
-            cur_out = self.fc1(mem_lstm_3)
-            spk_out, mem_out = self.lif1(cur_out, mem_out)
-            cur_out2 = self.fc2(mem_out)
-            spk_out2, mem_out2 = self.lif2(cur_out2, mem_out2)
-
-            mem_output = torch.mean(input=mem_out2, dim=-1)
-            mem_output = torch.unsqueeze(input=mem_output, dim=-1)
-
-            cur_out_rec.append(cur_out2)
-            mem_out_rec.append(mem_output)
-            spk_out_rec.append(spk_lstm_3)
-
-        return {
-            "current": torch.stack(cur_out_rec, dim=0),
-            "membrane_potential": torch.stack(mem_out_rec, dim=0),
-            "spikes": torch.stack(spk_out_rec, dim=0),
-        }
+        return {"membrane_potential": output}
 
 
 def main():
     """Main function for model.py"""
+    slstm = SLSTM(timesteps=10, hidden=256, num_output=64)
+    lstm = LSTM(timesteps=10, hidden=341)
+    print(slstm, lstm)
     return None
 
 

@@ -224,7 +224,7 @@ def test(model, device, dataloader_test):
 def predict(
     model,
     device,
-    dataloader_test,
+    dataloader_predict,
     mean_strain,
     std_strain,
     mean_stress,
@@ -240,7 +240,7 @@ def predict(
         f"{79 * '-'}"
     )
 
-    test_batch = iter(dataloader_test)
+    test_batch = iter(dataloader_predict)
     strain_norm, stress_norm = next(test_batch)
 
     strain_norm = strain_norm[0:num_samples, :, :]

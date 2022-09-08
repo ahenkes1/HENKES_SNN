@@ -7,19 +7,228 @@ import trainer
 import torch
 
 
+def convergence(
+    device,
+    data_train,
+    data_val,
+    data_test,
+    timesteps,
+    epochs,
+):
+    """Convergence study hidden versus num outputs."""
+    with open(file=r"./saved_model/results_convergence.csv", mode="a") as file:
+        writer = csv.writer(file)
+        writer.writerow(["out", "hidden", "mean_rel", "mean_rel_end"])
+
+    for out in [16, 32, 64, 128, 256]:
+        for hidden in [16, 32, 64, 128, 256]:
+            savepath = (
+                "./saved_model/"
+                + "out_"
+                + str(out)
+                + "_hidden_"
+                + str(hidden)
+                + "_"
+            )
+
+            slstm = model.SLSTM(
+                timesteps=timesteps, hidden=hidden, num_output=out
+            ).to(device=device)
+
+            training_hist = trainer.training(
+                dataloader_train=data_train,
+                dataloader_val=data_val,
+                model=slstm,
+                learning_rate=1e-3,
+                optimizer="adamw",
+                device=device,
+                epochs=epochs,
+                savepath=(savepath + "saved_model.pth"),
+            )
+
+            slstm.load_state_dict(torch.load(savepath + "saved_model.pth"))
+
+            testing_results = trainer.test(
+                dataloader_test=data_test,
+                model=slstm,
+                device=device,
+            )
+
+            # prediction = trainer.predict(
+            #     dataloader_test=data_test,
+            #     model=slstm,
+            #     device=device,
+            #     mean_strain=mean_strain,
+            #     std_strain=std_strain,
+            #     mean_stress=mean_stress,
+            #     std_stress=std_stress,
+            #     num_samples=PREDICTION_SIZE,
+            # )
+
+            torch.save(
+                {
+                    "training_hist": training_hist,
+                    "testing_results": testing_results,
+                    # "prediction": prediction,
+                },
+                savepath + "save",
+            )
+
+            entry = [
+                str(out),
+                str(hidden),
+                testing_results["mean_rel_err_test"],
+                testing_results["mean_rel_err_end_test"],
+            ]
+            with open(
+                file=r"./saved_model/results_convergence.csv", mode="a"
+            ) as file:
+                writer = csv.writer(file)
+                writer.writerow(entry)
+
+            # plt.figure(0)
+            # for i in range(PREDICTION_SIZE):
+            #     plt.plot(
+            #         prediction["strain"][:, i],
+            #         prediction["true"][:, i],
+            #         color="black",
+            #     )
+            #     plt.plot(
+            #         prediction["strain"][:, i],
+            #         prediction["prediction"][:, i],
+            #         color="red",
+            #     )
+            # plt.savefig(savepath + "prediction.png")
+
+            plt.figure(1)
+            plt.semilogy(training_hist["epoch_loss_train"], label="train")
+            plt.semilogy(training_hist["epoch_loss_val"], label="val")
+            plt.savefig(savepath + "loss.png")
+
+    return None
+
+
+def comparison(
+    device,
+    data_train,
+    data_val,
+    data_test,
+    data_predict,
+    timesteps,
+    epochs,
+    mean_strain,
+    std_strain,
+    mean_stress,
+    std_stress,
+):
+    """Comparison SLSTM versus LSTM."""
+
+    with open(file=r"./saved_model/results_comparison.csv", mode="a") as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            [
+                "SLSTM_mean_rel",
+                "SLSTM_mean_rel_end",
+                "SLSTM_prediction",
+                "LSTM_mean_rel",
+                "LSTM_mean_rel_end",
+                "LSTM_prediction",
+            ]
+        )
+
+    slstm = model.SLSTM(timesteps=timesteps, hidden=256, num_output=64).to(
+        device=device
+    )
+    lstm = model.LSTM(timesteps=timesteps, hidden=341).to(device=device)
+
+    slstm_test = None
+    slstm_test_end = None
+    slstm_pred = None
+    lstm_test = None
+    lstm_test_end = None
+    lstm_pred = None
+
+    for network in [slstm, lstm]:
+        if network == slstm:
+            savepath = "./saved_model/slstm_"
+        else:
+            savepath = "./saved_model/lstm_"
+
+        training_hist = trainer.training(
+            dataloader_train=data_train,
+            dataloader_val=data_val,
+            model=network,
+            learning_rate=1e-3,
+            optimizer="adamw",
+            device=device,
+            epochs=epochs,
+            savepath=(savepath + "saved_model.pth"),
+        )
+
+        network.load_state_dict(torch.load(savepath + "saved_model.pth"))
+
+        testing_results = trainer.test(
+            dataloader_test=data_test,
+            model=network,
+            device=device,
+        )
+
+        prediction = trainer.predict(
+            dataloader_predict=data_predict,
+            model=network,
+            device=device,
+            mean_strain=mean_strain,
+            std_strain=std_strain,
+            mean_stress=mean_stress,
+            std_stress=std_stress,
+            num_samples=1,
+        )
+
+        torch.save(
+            {
+                "training_hist": training_hist,
+                "testing_results": testing_results,
+                "prediction": prediction,
+            },
+            savepath + "save",
+        )
+
+        if network == slstm:
+            slstm_test = (testing_results["mean_rel_err_test"],)
+            slstm_test_end = (testing_results["mean_rel_err_end_test"],)
+            slstm_pred = prediction
+        else:
+            lstm_test = (testing_results["mean_rel_err_test"],)
+            lstm_test_end = (testing_results["mean_rel_err_end_test"],)
+            lstm_pred = prediction
+
+    entry = [
+        slstm_test,
+        slstm_test_end,
+        slstm_pred,
+        lstm_test,
+        lstm_test_end,
+        lstm_pred,
+    ]
+
+    with open(file=r"./saved_model/results_comparison.csv", mode="a") as file:
+        writer = csv.writer(file)
+        writer.writerow(entry)
+
+    return None
+
+
 def main(device):
     """Main function for the plasticity experiment."""
     YIELD_STRESS = 300
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
     BATCH_SIZE = 1024
-    PREDICTION_SIZE = 10
+    # PREDICTION_SIZE = 10
     TIMESTEPS = 100
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    # NUM_HIDDEN = 32
-    # NUM_OUTPUT = NUM_HIDDEN
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
 
     data_train_dict = dataset.plasticity(
@@ -66,93 +275,41 @@ def main(device):
         mean_stress=mean_stress,
         std_stress=std_stress,
     )["dataloader"]
+    data_predict = dataset.plasticity(
+        yield_stress=YIELD_STRESS,
+        elastic_modulus=ELASTIC_MODULUS,
+        hardening_modulus=HARDENING_MODULUS,
+        batch_size=1,
+        num_samples=1,
+        timesteps=TIMESTEPS,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )["dataloader"]
 
-    with open(file=r"./saved_model/results.csv", mode="a") as file:
-        writer = csv.writer(file)
-        writer.writerow(["out", "hidden", "mean_rel", "mean_rel_end"])
+    convergence(
+        device=device,
+        data_train=data_train,
+        data_val=data_val,
+        data_test=data_test,
+        timesteps=TIMESTEPS,
+        epochs=EPOCHS,
+    )
 
-    for out in [16, 32, 64, 128, 256]:
-        for hidden in [16, 32, 64, 128, 256]:
-            savepath = (
-                "./saved_model/"
-                + "out_"
-                + str(out)
-                + "_hidden_"
-                + str(hidden)
-                + "_"
-            )
-
-            slstm = model.SLSTM(
-                timesteps=TIMESTEPS, hidden=hidden, num_output=out
-            ).to(device=device)
-
-            training_hist = trainer.training(
-                dataloader_train=data_train,
-                dataloader_val=data_val,
-                model=slstm,
-                learning_rate=1e-3,
-                optimizer="adamw",
-                device=device,
-                epochs=EPOCHS,
-                savepath=(savepath + "saved_model.pth"),
-            )
-
-            slstm.load_state_dict(torch.load(savepath + "saved_model.pth"))
-
-            testing_results = trainer.test(
-                dataloader_test=data_test,
-                model=slstm,
-                device=device,
-            )
-
-            prediction = trainer.predict(
-                dataloader_test=data_test,
-                model=slstm,
-                device=device,
-                mean_strain=mean_strain,
-                std_strain=std_strain,
-                mean_stress=mean_stress,
-                std_stress=std_stress,
-                num_samples=PREDICTION_SIZE,
-            )
-
-            torch.save(
-                {
-                    "training_hist": training_hist,
-                    "testing_results": testing_results,
-                    "prediction": prediction,
-                },
-                savepath + "save",
-            )
-
-            entry = [
-                str(out),
-                str(hidden),
-                testing_results["mean_rel_err_test"],
-                testing_results["mean_rel_err_end_test"],
-            ]
-            with open(file=r"./saved_model/results.csv", mode="a") as file:
-                writer = csv.writer(file)
-                writer.writerow(entry)
-
-            plt.figure(0)
-            for i in range(PREDICTION_SIZE):
-                plt.plot(
-                    prediction["strain"][:, i],
-                    prediction["true"][:, i],
-                    color="black",
-                )
-                plt.plot(
-                    prediction["strain"][:, i],
-                    prediction["prediction"][:, i],
-                    color="red",
-                )
-            plt.savefig(savepath + "prediction.png")
-
-            plt.figure(1)
-            plt.semilogy(training_hist["epoch_loss_train"], label="train")
-            plt.semilogy(training_hist["epoch_loss_val"], label="val")
-            plt.savefig(savepath + "loss.png")
+    comparison(
+        device=device,
+        data_train=data_train,
+        data_val=data_val,
+        data_test=data_test,
+        data_predict=data_predict,
+        timesteps=TIMESTEPS,
+        epochs=EPOCHS,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+    )
 
     return None
 
