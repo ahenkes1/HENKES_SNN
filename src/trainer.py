@@ -15,6 +15,7 @@ def training(
     savepath,
 ):
     model.train(mode=True)
+    # model = model.to(device)
 
     optimizer = str(optimizer)
     if optimizer == "nadam":

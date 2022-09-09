@@ -120,6 +120,7 @@ def comparison(
     std_strain,
     mean_stress,
     std_stress,
+    batch,
 ):
     """Comparison SLSTM versus LSTM."""
 
@@ -136,11 +137,6 @@ def comparison(
             ]
         )
 
-    slstm = model.SLSTM(timesteps=timesteps, hidden=256, num_output=64).to(
-        device=device
-    )
-    lstm = model.LSTM(timesteps=timesteps, hidden=341).to(device=device)
-
     slstm_test = None
     slstm_test_end = None
     slstm_pred = None
@@ -148,11 +144,20 @@ def comparison(
     lstm_test_end = None
     lstm_pred = None
 
-    for network in [slstm, lstm]:
-        if network == slstm:
+    for network in ["slstm", "lstm"]:
+
+        if network == "slstm":
             savepath = "./saved_model/slstm_"
+            network = model.SLSTM(
+                timesteps=timesteps, hidden=256, num_output=64
+            ).to(device=device)
+
         else:
             savepath = "./saved_model/lstm_"
+            network = model.LSTM(
+                timesteps=timesteps, hidden=256, batch=batch, device=device,
+                num_output=64
+            ).to(device=device)
 
         training_hist = trainer.training(
             dataloader_train=data_train,
@@ -193,7 +198,7 @@ def comparison(
             savepath + "save",
         )
 
-        if network == slstm:
+        if network == "slstm":
             slstm_test = (testing_results["mean_rel_err_test"],)
             slstm_test_end = (testing_results["mean_rel_err_end_test"],)
             slstm_pred = prediction
@@ -223,8 +228,10 @@ def main(device):
     YIELD_STRESS = 300
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
-    BATCH_SIZE = 128
-    TIMESTEPS = 100
+    # BATCH_SIZE = 1024
+    BATCH_SIZE = 32
+    # TIMESTEPS = 100
+    TIMESTEPS = 10
     # NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
@@ -310,10 +317,11 @@ def main(device):
         std_strain=std_strain,
         mean_stress=mean_stress,
         std_stress=std_stress,
+        batch=BATCH_SIZE,
     )
 
     return None
 
 
 if __name__ == "__main__":
-    main(device="cpu")
+    main(device="cuda")

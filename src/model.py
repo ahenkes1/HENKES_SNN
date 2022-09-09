@@ -131,25 +131,29 @@ class SLSTM(torch.nn.Module):
 class LSTM(torch.nn.Module):
     """Simple spiking neural network in snntorch."""
 
-    def __init__(self, timesteps, hidden):
+    def __init__(self, timesteps, hidden, batch, device, num_output):
         super().__init__()
         self.timesteps = timesteps
         self.hidden = hidden
+        self.num_output = num_output
 
-        self.lstm_1 = torch.nn.LSTMCell(
+        self.lstm = torch.nn.LSTM(
             input_size=1,
             hidden_size=self.hidden,
+            num_layers=3,
         )
 
-        self.lstm_2 = torch.nn.LSTMCell(
-            input_size=self.hidden,
-            hidden_size=self.hidden,
-        )
+        self.fc1 = torch.nn.Linear(self.hidden, out_features=self.hidden)
+        self.act = torch.nn.LeakyReLU()
 
-        self.lstm_3 = torch.nn.LSTMCell(
-            input_size=self.hidden,
-            hidden_size=1,
-        )
+        self.fc2 = torch.nn.Linear(self.hidden, out_features=self.num_output)
+
+        # self.hx1 = torch.rand(batch, self.hidden).to(device)
+        # self.cx1 = torch.rand(batch, self.hidden).to(device)
+        # self.hx2 = torch.rand(batch, self.hidden).to(device)
+        # self.cx2 = torch.rand(batch, self.hidden).to(device)
+        # self.hx3 = torch.rand(batch, self.hidden).to(device)
+        # self.cx3 = torch.rand(batch, self.hidden).to(device)
 
         params = sum(param.numel() for param in self.parameters())
         space = 20
@@ -166,33 +170,34 @@ class LSTM(torch.nn.Module):
 
     def forward(self, x):
         """Forward pass for several time steps."""
-        batch = x.shape[1]
-        hx1 = torch.rand(batch, self.hidden)
-        cx1 = torch.rand(batch, self.hidden)
+        # output = []
+        # for step in range(self.timesteps):
+        #     x_timestep = x[step, :, :]
+        #     hx1, cx1 = self.lstm_1(x_timestep, (self.hx1, self.cx1))
+        #     hx2, cx2 = self.lstm_2(hx1, (self.hx2, self.cx2))
+        #     hx3, cx3 = self.lstm_3(hx2, (self.hx3, self.cx3))
+        #     out = self.fc1(hx3)
+        #     out = self.act(out)
+        #     out = self.fc2(out)
+        #     out = torch.mean(input=out, dim=-1)
+        #     out = torch.unsqueeze(input=out, dim=-1)
+        #     output.append(out)
+        out = self.lstm(x)
+        out = self.fc1(out[0])
+        out = self.act(out)
+        out = self.fc2(out)
+        out = torch.mean(input=out, dim=-1)
+        out = torch.unsqueeze(input=out, dim=-1)
 
-        hx2 = torch.rand(batch, self.hidden)
-        cx2 = torch.rand(batch, self.hidden)
-
-        hx3 = torch.rand(batch, 1)
-        cx3 = torch.rand(batch, 1)
-
-        output = []
-        for step in range(self.timesteps):
-            x_timestep = x[step, :, :]
-            hx1, cx1 = self.lstm_1(x_timestep, (hx1, cx1))
-            hx2, cx2 = self.lstm_2(hx1, (hx2, cx2))
-            hx3, cx3 = self.lstm_3(hx2, (hx3, cx3))
-            output.append(hx3)
-
-        output = torch.stack(output, dim=0)
-
-        return {"membrane_potential": output}
+        return {"membrane_potential": out}
 
 
 def main():
     """Main function for model.py"""
     slstm = SLSTM(timesteps=10, hidden=256, num_output=64)
-    lstm = LSTM(timesteps=10, hidden=341)
+    lstm = LSTM(
+        timesteps=10, hidden=341, device="cuda", batch=1, num_output=64
+    )
     print(slstm, lstm)
     return None
 
