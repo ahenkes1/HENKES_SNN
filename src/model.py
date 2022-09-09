@@ -131,7 +131,7 @@ class SLSTM(torch.nn.Module):
 class LSTM(torch.nn.Module):
     """Simple spiking neural network in snntorch."""
 
-    def __init__(self, timesteps, hidden, batch, device, num_output):
+    def __init__(self, timesteps, hidden, num_output):
         super().__init__()
         self.timesteps = timesteps
         self.hidden = hidden
@@ -195,9 +195,7 @@ class LSTM(torch.nn.Module):
 def main():
     """Main function for model.py"""
     slstm = SLSTM(timesteps=10, hidden=256, num_output=64)
-    lstm = LSTM(
-        timesteps=10, hidden=341, device="cuda", batch=1, num_output=64
-    )
+    lstm = LSTM(timesteps=10, hidden=341, num_output=64)
     print(slstm, lstm)
     return None
 

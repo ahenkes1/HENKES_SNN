@@ -120,33 +120,20 @@ def comparison(
     std_strain,
     mean_stress,
     std_stress,
-    batch,
 ):
     """Comparison SLSTM versus LSTM."""
-
-    with open(file=r"./saved_model/results_comparison.csv", mode="a") as file:
-        writer = csv.writer(file)
-        writer.writerow(
-            [
-                "SLSTM_mean_rel",
-                "SLSTM_mean_rel_end",
-                "SLSTM_prediction",
-                "LSTM_mean_rel",
-                "LSTM_mean_rel_end",
-                "LSTM_prediction",
-            ]
-        )
-
+    strain = None
+    stress = None
+    slstm_stress = None
+    lstm_stress = None
     slstm_test = None
     slstm_test_end = None
-    slstm_pred = None
     lstm_test = None
     lstm_test_end = None
-    lstm_pred = None
 
-    for network in ["slstm", "lstm"]:
+    for case in ["slstm", "lstm"]:
 
-        if network == "slstm":
+        if case == "slstm":
             savepath = "./saved_model/slstm_"
             network = model.SLSTM(
                 timesteps=timesteps, hidden=256, num_output=64
@@ -155,8 +142,7 @@ def comparison(
         else:
             savepath = "./saved_model/lstm_"
             network = model.LSTM(
-                timesteps=timesteps, hidden=256, batch=batch, device=device,
-                num_output=64
+                timesteps=timesteps, hidden=256, num_output=64
             ).to(device=device)
 
         training_hist = trainer.training(
@@ -198,27 +184,73 @@ def comparison(
             savepath + "save",
         )
 
-        if network == "slstm":
-            slstm_test = (testing_results["mean_rel_err_test"],)
-            slstm_test_end = (testing_results["mean_rel_err_end_test"],)
-            slstm_pred = prediction
-        else:
-            lstm_test = (testing_results["mean_rel_err_test"],)
-            lstm_test_end = (testing_results["mean_rel_err_end_test"],)
-            lstm_pred = prediction
+        if case == "slstm":
+            slstm_test = testing_results["mean_rel_err_test"]
+            slstm_test_end = testing_results["mean_rel_err_end_test"]
+            strain = prediction["strain"].tolist()
+            stress = prediction["true"].tolist()
+            slstm_stress = prediction["prediction"].tolist()
 
-    entry = [
-        slstm_test,
-        slstm_test_end,
-        slstm_pred,
-        lstm_test,
-        lstm_test_end,
-        lstm_pred,
-    ]
+        else:
+            lstm_test = testing_results["mean_rel_err_test"]
+            lstm_test_end = testing_results["mean_rel_err_end_test"]
+            lstm_stress = prediction["prediction"].tolist()
+
+    # strain = reduce(lambda x, y: x + y, strain)
+    # stress = reduce(lambda x, y: x + y, stress)
+
+    strain_stress = list(zip(strain, stress))
+    strain_slstm = list(zip(strain, slstm_stress))
+    strain_lstm = list(zip(strain, lstm_stress))
 
     with open(file=r"./saved_model/results_comparison.csv", mode="a") as file:
         writer = csv.writer(file)
-        writer.writerow(entry)
+        writer.writerow(
+            [
+                "Strain-Stress",
+            ]
+        )
+        writer.writerow(
+            [
+                strain_stress,
+            ]
+        )
+        writer.writerow(
+            [
+                "Strain-SLSTM",
+            ]
+        )
+        writer.writerow(
+            [
+                strain_slstm,
+            ]
+        )
+        writer.writerow(
+            [
+                "Strain-LSTM",
+            ]
+        )
+        writer.writerow(
+            [
+                strain_lstm,
+            ]
+        )
+        writer.writerow(
+            [
+                "SLSTM_mean_rel",
+                "SLSTM_mean_rel_end",
+                "LSTM_mean_rel",
+                "LSTM_mean_rel_end",
+            ]
+        )
+        writer.writerow(
+            [
+                slstm_test,
+                slstm_test_end,
+                lstm_test,
+                lstm_test_end,
+            ]
+        )
 
     return None
 
@@ -228,16 +260,14 @@ def main(device):
     YIELD_STRESS = 300
     ELASTIC_MODULUS = 2.1e5
     HARDENING_MODULUS = 2.1e5 / 100
-    # BATCH_SIZE = 1024
-    BATCH_SIZE = 32
-    # TIMESTEPS = 100
-    TIMESTEPS = 10
+    BATCH_SIZE = 1024
+    TIMESTEPS = 100
     # NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     # EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 10
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1
 
     data_train_dict = dataset.plasticity(
         yield_stress=YIELD_STRESS,
@@ -317,7 +347,6 @@ def main(device):
         std_strain=std_strain,
         mean_stress=mean_stress,
         std_stress=std_stress,
-        batch=BATCH_SIZE,
     )
 
     return None
