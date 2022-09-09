@@ -132,4 +132,3 @@ dmypy.json
 .idea/
 src/saved_model/
 src/results/
-!/src/results/*.csv
