@@ -8,6 +8,7 @@ import numpy as np
 import random
 import torch
 
+import experiment_elasticity
 import experiment_plasticity
 
 
@@ -56,7 +57,7 @@ def main(parser_args=None):
     )
 
     if EXAMPLE == "elasticity":
-        raise NotImplementedError("This experiment does not exist.")
+        experiment_elasticity.main(device=DEVICE)
 
     elif EXAMPLE == "plasticity":
         experiment_plasticity.main(device=DEVICE)
