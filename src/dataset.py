@@ -87,12 +87,16 @@ class Regression_dataset(torch.utils.data.Dataset):
         std_strain=None,
         mean_stress=None,
         std_stress=None,
+        mean_youngs=None,
+        std_youngs=None,
     ):
         self.num_samples = num_samples
         self.mean_strain = mean_strain
         self.std_strain = std_strain
         self.mean_stress = mean_stress
         self.std_stress = std_stress
+        self.mean_youngs = mean_youngs
+        self.std_youngs = std_youngs
         strain_lst = []
         stress_lst = []
 
@@ -178,6 +182,7 @@ class Regression_dataset(torch.utils.data.Dataset):
 
         elif mode == "elasticity":
 
+            modulus_lst = []
             with tqdm.trange(num_samples) as pbar:
                 for _ in pbar:
                     MAX_STRAIN = float(torch.rand(1)) * 1e-2
@@ -190,11 +195,22 @@ class Regression_dataset(torch.utils.data.Dataset):
 
                     stress = torch.Tensor(ELASTIC_MODULUS * strain)
 
+                    modulus_lst.append(torch.as_tensor(ELASTIC_MODULUS))
                     strain_lst.append(strain)
                     stress_lst.append(stress)
 
+            modulus_lst = torch.stack(modulus_lst, dim=0)
             strain_lst = torch.stack(strain_lst, dim=1)
             stress_lst = torch.stack(stress_lst, dim=1)
+
+            if mean_youngs is None and std_youngs is None:
+                print("Calculate mean and std!")
+                std_youngs, mean_youngs = torch.std_mean(modulus_lst)
+                self.mean_youngs = mean_youngs
+                self.std_youngs = std_youngs
+
+            else:
+                print("Using pre-defined mean and std!")
 
             if mean_strain is None:
                 print("Calculate mean and std!")
@@ -210,11 +226,16 @@ class Regression_dataset(torch.utils.data.Dataset):
             else:
                 print("Using pre-defined mean and std!")
 
+            youngs_norm = (modulus_lst - self.mean_youngs) / self.std_youngs
             strain_norm = (strain_lst - self.mean_strain) / self.std_strain
             stress_norm = (stress_lst - self.mean_stress) / self.std_stress
 
-            self.features = strain_norm
+            youngs_norm = torch.unsqueeze(youngs_norm, 0)
+            youngs_norm = torch.unsqueeze(youngs_norm, -1)
+            youngs_norm = torch.repeat_interleave(youngs_norm, timesteps, 0)
+            self.features = torch.cat([strain_norm, youngs_norm], dim=-1)
             self.labels = stress_norm
+            self.youngs = youngs_norm
 
         else:
             raise NotImplementedError()
@@ -224,7 +245,7 @@ class Regression_dataset(torch.utils.data.Dataset):
         return self.num_samples
 
     def __getitem__(self, idx):
-        """General implementation, but we only have one sample."""
+        """General implementation."""
         return self.features[:, idx, :], self.labels[:, idx, :]
 
     def statistics(self):
@@ -234,6 +255,8 @@ class Regression_dataset(torch.utils.data.Dataset):
             "std_strain": self.std_strain,
             "mean_stress": self.mean_stress,
             "std_stress": self.std_stress,
+            "mean_youngs": self.mean_youngs,
+            "std_youngs": self.std_youngs,
         }
 
 
@@ -350,6 +373,8 @@ def elasticity(
     std_strain=None,
     mean_stress=None,
     std_stress=None,
+    mean_youngs=None,
+    std_youngs=None,
 ):
     """Create dataset and dataloader for the elasticity case."""
     print(f"{79 * '='}\n" f"{' ':<20}{'Dataset':^39}{' ':>20}")
@@ -364,6 +389,8 @@ def elasticity(
         std_strain=std_strain,
         mean_stress=mean_stress,
         std_stress=std_stress,
+        mean_youngs=mean_youngs,
+        std_youngs=std_youngs,
     )
 
     statistics = dataset.statistics()
