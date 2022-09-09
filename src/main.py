@@ -37,7 +37,7 @@ def get_input():
 
     parser.add_argument(
         "--example",
-        default="plasticity",
+        default="elasticity",
         type=str,
         choices=["elasticity", "plasticity"],
         help="Execute the numerical examples from the paper",
