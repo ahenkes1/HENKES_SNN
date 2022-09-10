@@ -185,7 +185,8 @@ class Regression_dataset(torch.utils.data.Dataset):
             modulus_lst = []
             with tqdm.trange(num_samples) as pbar:
                 for _ in pbar:
-                    MAX_STRAIN = float(torch.rand(1)) * 1e-2
+                    # MAX_STRAIN = float(torch.rand(1)) * 1e-2
+                    MAX_STRAIN = 1e-2
                     ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
 
                     strain = torch.linspace(

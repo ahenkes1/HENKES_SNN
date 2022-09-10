@@ -20,7 +20,7 @@ def convergence(
         file=r"./saved_model/results_convergence_elasticity.csv", mode="a"
     ) as file:
         writer = csv.writer(file)
-        writer.writerow(["out", "hidden", "mean_rel", "mean_rel_end"])
+        writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
     for hidden in [16, 32, 64, 128, 256]:
         savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
