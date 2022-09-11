@@ -134,6 +134,8 @@ class LIF(torch.nn.Module):
         cur_out_rec = []
         mem_out_rec = []
         spk_out_rec = []
+        spk_12 = []
+        spk_23 = []
 
         for step in range(self.timesteps):
             x_timestep = x[step, :, :]
@@ -144,6 +146,11 @@ class LIF(torch.nn.Module):
             spk_out2, mem_out2 = self.lif2(cur_out2, mem_out2)
             cur_out3 = self.fc3(spk_out2)
             spk_out3, mem_out3 = self.lif3(cur_out3, mem_out3)
+
+            # DEBUG
+            spk_12.append(spk_out1)
+            spk_23.append(spk_out2)
+            ##########################
 
             cur_out4 = self.fc4(mem_out3)
             spk_out4, mem_out4 = self.lif4(cur_out4, mem_out4)
@@ -156,6 +163,14 @@ class LIF(torch.nn.Module):
             cur_out_rec.append(cur_out5)
             mem_out_rec.append(mem_output)
             spk_out_rec.append(spk_out5)
+
+        ######Debug##
+
+        spk_12 = torch.mean(torch.stack(spk_12, dim=0), dim=[0, 1, 2])
+        spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
+        print(f"spk12: {spk_12}, spk23: {spk_23}")
+
+        ##########
 
         return {
             "current": torch.stack(cur_out_rec, dim=0),

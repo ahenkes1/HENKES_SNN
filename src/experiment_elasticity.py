@@ -22,8 +22,8 @@ def convergence(
         writer = csv.writer(file)
         writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
-    for hidden in [16, 32, 64, 128, 256]:
-        # for hidden in [64]:
+    # for hidden in [16, 32, 64, 128, 256]:
+    for hidden in [64]:
         savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
 
         lif = model.LIF(
@@ -223,12 +223,15 @@ def convergence(
 def main(device):
     """Main function for the elasticity experiment."""
     ELASTIC_MODULUS = 2.1e5
-    BATCH_SIZE = 1024
+    # BATCH_SIZE = 1024
+    BATCH_SIZE = 1
     TIMESTEPS = 10
-    NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
+    # NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
+    NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 100
+    # EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 100
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1000
 
     data_train_dict = dataset.elasticity(
         elastic_modulus=ELASTIC_MODULUS,
