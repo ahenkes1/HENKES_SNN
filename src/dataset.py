@@ -3,6 +3,8 @@ import torch
 import torch.utils.data
 import tqdm
 
+# from pprint import pprint
+
 
 def isotropic_hardening(
     strains,
@@ -72,6 +74,39 @@ def isotropic_hardening(
     }
 
 
+def newton_ramberg_osgood(
+    strain, youngs_modulus, sigma_0, n, sigma_n, tol, max_iter
+):
+    """Newton iteration for Ramberg-Osgood."""
+    strain = torch.as_tensor(strain)
+    youngs_modulus = torch.as_tensor(youngs_modulus)
+    sigma_0 = torch.as_tensor(sigma_0)
+    n = torch.as_tensor(n)
+    sigma_n = torch.as_tensor(sigma_n)
+    tol = torch.as_tensor(tol)
+
+    iteration = None
+    for iteration in range(max_iter):
+
+        residual = strain - (
+            (sigma_n / youngs_modulus) + (0.002 * (sigma_n / sigma_0) ** n)
+        )
+
+        if torch.norm(residual) < tol and iteration > 0:
+            break
+
+        d_residual = (-1 / youngs_modulus) - (
+            ((0.002 * n) / sigma_0) * ((sigma_n / sigma_0) ** (n - 1))
+        )
+
+        sigma_n = sigma_n - (residual / d_residual)
+
+    if iteration == max_iter:
+        raise SystemExit("Max. iter. reached!")
+
+    return sigma_n
+
+
 class Regression_dataset(torch.utils.data.Dataset):
     """Simple regression dataset."""
 
@@ -83,6 +118,7 @@ class Regression_dataset(torch.utils.data.Dataset):
         yield_stress=300,
         elastic_modulus=2.1e5,
         hardening_modulus=2.1e5 / 100,
+        n=None,
         mean_strain=None,
         std_strain=None,
         mean_stress=None,
@@ -154,14 +190,22 @@ class Regression_dataset(torch.utils.data.Dataset):
             with tqdm.trange(num_samples) as pbar:
                 for _ in pbar:
                     MAX_STRAIN = float(torch.rand(1)) * 1e-2
-                    ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
+                    # ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
 
                     strain = torch.linspace(
                         start=0.0, end=MAX_STRAIN, steps=timesteps
                     )
                     strain = torch.unsqueeze(strain, -1)
 
-                    stress = torch.Tensor(ELASTIC_MODULUS * strain)
+                    stress = newton_ramberg_osgood(
+                        strain=strain,
+                        youngs_modulus=elastic_modulus,
+                        sigma_0=yield_stress,
+                        n=n,
+                        sigma_n=strain * elastic_modulus,
+                        tol=1e-8,
+                        max_iter=100,
+                    )
 
                     strain_lst.append(strain)
                     stress_lst.append(stress)
@@ -182,36 +226,36 @@ class Regression_dataset(torch.utils.data.Dataset):
 
         elif mode == "elasticity":
 
-            modulus_lst = []
+            # modulus_lst = []
             with tqdm.trange(num_samples) as pbar:
                 for _ in pbar:
-                    # MAX_STRAIN = float(torch.rand(1)) * 1e-2
-                    MAX_STRAIN = 1e-2
-                    ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
+                    MAX_STRAIN = float(torch.rand(1)) * 1e-2
+                    # MAX_STRAIN = 1e-2
+                    # ELASTIC_MODULUS = float(torch.rand(1)) * 1e5
 
                     strain = torch.linspace(
                         start=0.0, end=MAX_STRAIN, steps=timesteps
                     )
                     strain = torch.unsqueeze(strain, -1)
 
-                    stress = torch.Tensor(ELASTIC_MODULUS * strain)
+                    stress = torch.Tensor(elastic_modulus * strain)
 
-                    modulus_lst.append(torch.as_tensor(ELASTIC_MODULUS))
+                    # modulus_lst.append(torch.as_tensor(elastic_modulus))
                     strain_lst.append(strain)
                     stress_lst.append(stress)
 
-            modulus_lst = torch.stack(modulus_lst, dim=0)
+            # modulus_lst = torch.stack(modulus_lst, dim=0)
             strain_lst = torch.stack(strain_lst, dim=1)
             stress_lst = torch.stack(stress_lst, dim=1)
 
-            if mean_youngs is None and std_youngs is None:
-                print("Calculate mean and std!")
-                std_youngs, mean_youngs = torch.std_mean(modulus_lst)
-                self.mean_youngs = mean_youngs
-                self.std_youngs = std_youngs
+            # if mean_youngs is None and std_youngs is None:
+            #     print("Calculate mean and std!")
+            #     std_youngs, mean_youngs = torch.std_mean(modulus_lst)
+            #     self.mean_youngs = mean_youngs
+            #     self.std_youngs = std_youngs
 
-            else:
-                print("Using pre-defined mean and std!")
+            # else:
+            #     print("Using pre-defined mean and std!")
 
             if mean_strain is None:
                 print("Calculate mean and std!")
@@ -227,16 +271,17 @@ class Regression_dataset(torch.utils.data.Dataset):
             else:
                 print("Using pre-defined mean and std!")
 
-            youngs_norm = (modulus_lst - self.mean_youngs) / self.std_youngs
+            # youngs_norm = (modulus_lst - self.mean_youngs) / self.std_youngs
             strain_norm = (strain_lst - self.mean_strain) / self.std_strain
             stress_norm = (stress_lst - self.mean_stress) / self.std_stress
 
-            youngs_norm = torch.unsqueeze(youngs_norm, 0)
-            youngs_norm = torch.unsqueeze(youngs_norm, -1)
-            youngs_norm = torch.repeat_interleave(youngs_norm, timesteps, 0)
-            self.features = torch.cat([strain_norm, youngs_norm], dim=-1)
+            # youngs_norm = torch.unsqueeze(youngs_norm, 0)
+            # youngs_norm = torch.unsqueeze(youngs_norm, -1)
+            # youngs_norm = torch.repeat_interleave(youngs_norm, timesteps, 0)
+            # self.features = torch.cat([strain_norm, youngs_norm], dim=-1)
+            self.features = strain_norm
             self.labels = stress_norm
-            self.youngs = youngs_norm
+            # self.youngs = youngs_norm
 
         else:
             raise NotImplementedError()
@@ -462,3 +507,25 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # strain_lst = []
+    # stress_lst = []
+    # for strain in torch.linspace(0.0, 0.01, 100):
+    #     stress = newton_ramberg_osgood(
+    #         strain=strain,
+    #         youngs_modulus=2.1e5,
+    #         sigma_0=300,
+    #         n=5,
+    #         sigma_n=strain * 2.1e5,
+    #         tol=1e-8,
+    #         max_iter=100,
+    #     )
+
+    #     strain_lst.append(strain.cpu().tolist())
+    #     stress_lst.append(stress.cpu().tolist())
+
+    # strain_stress = list(zip(strain_lst, stress_lst))
+
+    # import matplotlib.pyplot as plt
+
+    # plt.plot(strain_lst, stress_lst)
+    # plt.show()

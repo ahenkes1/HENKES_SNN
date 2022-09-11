@@ -75,6 +75,7 @@ def training(
             for feature, label in train_batch:
                 feature = torch.swapaxes(input=feature, axis0=0, axis1=1)
                 label = torch.swapaxes(input=label, axis0=0, axis1=1)
+
                 feature = feature.to(device)
                 label = label.to(device)
                 out_dict = model(feature)

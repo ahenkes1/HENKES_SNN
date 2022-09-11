@@ -17,7 +17,7 @@ class LIF(torch.nn.Module):
 
         beta_out1 = torch.rand(self.hidden)
         thr_out1 = torch.rand(self.hidden)
-        self.fc1 = torch.nn.Linear(2, out_features=self.hidden)
+        self.fc1 = torch.nn.Linear(1, out_features=self.hidden)
         self.lif1 = snntorch.Leaky(
             beta=beta_out1,
             threshold=thr_out1,
