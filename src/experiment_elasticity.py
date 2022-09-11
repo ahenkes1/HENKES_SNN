@@ -34,7 +34,7 @@ def convergence(
             dataloader_train=data_train,
             dataloader_val=data_val,
             model=lif,
-            learning_rate=1e-2,
+            learning_rate=1e-3,
             optimizer="adamw",
             device=device,
             epochs=epochs,
