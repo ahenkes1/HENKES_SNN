@@ -14,6 +14,7 @@ class LIF(torch.nn.Module):
         self.num_output = num_output
 
         spike_grad = surrogate.atan()
+        reset_mechanism = "subtract"
 
         beta_out1 = torch.rand(self.hidden)
         thr_out1 = torch.rand(self.hidden)
@@ -24,7 +25,7 @@ class LIF(torch.nn.Module):
             learn_beta=True,
             learn_threshold=True,
             spike_grad=spike_grad,
-            reset_mechanism="subtract",
+            reset_mechanism=reset_mechanism,
         )
 
         beta_out2 = torch.rand(self.hidden)
@@ -36,7 +37,7 @@ class LIF(torch.nn.Module):
             learn_beta=True,
             learn_threshold=True,
             spike_grad=spike_grad,
-            reset_mechanism="subtract",
+            reset_mechanism=reset_mechanism,
         )
 
         beta_out3 = torch.rand(self.hidden)
@@ -48,7 +49,7 @@ class LIF(torch.nn.Module):
             learn_beta=True,
             learn_threshold=True,
             spike_grad=spike_grad,
-            reset_mechanism="subtract",
+            reset_mechanism=reset_mechanism,
         )
 
         beta_out4 = torch.rand(self.hidden)
@@ -75,6 +76,36 @@ class LIF(torch.nn.Module):
             reset_mechanism="none",
         )
 
+        # DEBUG
+        # alpha_d1 = torch.rand(self.num_output)
+        # beta_d1 = torch.rand(self.num_output)
+        # thr_d1 = torch.rand(self.num_output)
+        # self.fcd1 = torch.nn.Linear(1, self.num_output)
+        # self.syn1 = snntorch.Synaptic(
+        #     alpha=alpha_d1,
+        #     beta=beta_d1,
+        #     threshold=thr_d1,
+        #     learn_alpha=True,
+        #     learn_beta=True,
+        #     learn_threshold=True,
+        #     spike_grad=spike_grad,
+        #     reset_mechanism=reset_mechanism,
+        # )
+        # alpha_d2 = torch.rand(self.num_output)
+        # beta_d2 = torch.rand(self.num_output)
+        # thr_d2 = torch.rand(self.num_output)
+        # self.fcd2 = torch.nn.Linear(self.hidden, self.num_output)
+        # self.syn2 = snntorch.Synaptic(
+        #     alpha=alpha_d2,
+        #     beta=beta_d2,
+        #     threshold=thr_d2,
+        #     learn_alpha=True,
+        #     learn_beta=True,
+        #     learn_threshold=True,
+        #     spike_grad=spike_grad,
+        #     reset_mechanism=reset_mechanism,
+        # )
+
         params = sum(param.numel() for param in self.parameters())
         space = 20
         print(
@@ -97,6 +128,9 @@ class LIF(torch.nn.Module):
         mem_out4 = self.lif4.init_leaky()
         mem_out5 = self.lif5.init_leaky()
 
+        # synd1, memd1 = self.syn1.init_synaptic()
+        # synd2, memd2 = self.syn2.init_synaptic()
+
         cur_out_rec = []
         mem_out_rec = []
         spk_out_rec = []
@@ -106,9 +140,9 @@ class LIF(torch.nn.Module):
 
             cur_out1 = self.fc1(x_timestep)
             spk_out1, mem_out1 = self.lif1(cur_out1, mem_out1)
-            cur_out2 = self.fc2(spk_out1)
+            cur_out2 = self.fc2(mem_out1)
             spk_out2, mem_out2 = self.lif2(cur_out2, mem_out2)
-            cur_out3 = self.fc3(spk_out2)
+            cur_out3 = self.fc3(mem_out2)
             spk_out3, mem_out3 = self.lif3(cur_out3, mem_out3)
 
             cur_out4 = self.fc4(mem_out3)
@@ -121,7 +155,7 @@ class LIF(torch.nn.Module):
 
             cur_out_rec.append(cur_out5)
             mem_out_rec.append(mem_output)
-            spk_out_rec.append(spk_out3)
+            spk_out_rec.append(spk_out5)
 
         return {
             "current": torch.stack(cur_out_rec, dim=0),

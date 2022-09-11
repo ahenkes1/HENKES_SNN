@@ -365,6 +365,7 @@ def ramberg_osgood(
     batch_size=1,
     num_samples=1,
     timesteps=10,
+    n=None,
     mean_strain=None,
     std_strain=None,
     mean_stress=None,
@@ -379,6 +380,7 @@ def ramberg_osgood(
         yield_stress=yield_stress,
         elastic_modulus=elastic_modulus,
         hardening_modulus=hardening_modulus,
+        n=n,
         mean_strain=mean_strain,
         std_strain=std_strain,
         mean_stress=mean_stress,
@@ -528,4 +530,18 @@ if __name__ == "__main__":
     # import matplotlib.pyplot as plt
 
     # plt.plot(strain_lst, stress_lst)
+    # plt.show()
+    # import matplotlib.pyplot as plt
+
+    # ns = 1000
+    # ela_dict = elasticity(elastic_modulus=1, num_samples=ns, timesteps=10)
+    # dataloader = ela_dict["dataloader"]
+    # statistics  = ela_dict["statistics"]
+    # print(statistics)
+    # data = iter(dataloader)
+    # for feature, label in data:
+    #     feature = torch.squeeze(feature)
+    #     label = torch.squeeze(label)
+    #     plt.plot(feature, label)
+
     # plt.show()

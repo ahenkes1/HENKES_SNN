@@ -22,19 +22,21 @@ def convergence(
         writer = csv.writer(file)
         writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
-    # for hidden in [16, 32, 64, 128, 256]:
-    for hidden in [64]:
+    for hidden in [16, 32, 64, 128, 256]:
         savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
 
         lif = model.LIF(
-            timesteps=timesteps, hidden=hidden, num_output=hidden
+            timesteps=timesteps, hidden=64, num_output=64
         ).to(device=device)
+        # lif = model.SLSTM(
+        #     timesteps=timesteps, hidden=256, num_output=64
+        # ).to(device=device)
 
         training_hist = trainer.training(
             dataloader_train=data_train,
             dataloader_val=data_val,
             model=lif,
-            learning_rate=1e-2,
+            learning_rate=1e-3,
             optimizer="adamw",
             device=device,
             epochs=epochs,
@@ -222,6 +224,8 @@ def convergence(
 
 def main(device):
     """Main function for the elasticity experiment."""
+    YIELD_STRESS = 300
+    N = 5
     ELASTIC_MODULUS = 2.1e5
     BATCH_SIZE = 1024
     TIMESTEPS = 10
@@ -230,8 +234,10 @@ def main(device):
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
 
-    data_train_dict = dataset.elasticity(
+    data_train_dict = dataset.ramberg_osgood(
         elastic_modulus=ELASTIC_MODULUS,
+        yield_stress=YIELD_STRESS,
+        n=N,
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_TRAIN,
         timesteps=TIMESTEPS,
@@ -252,8 +258,10 @@ def main(device):
     # mean_youngs = statistics["mean_youngs"]
     # std_youngs = statistics["std_youngs"]
 
-    data_val = dataset.elasticity(
+    data_val = dataset.ramberg_osgood(
         elastic_modulus=ELASTIC_MODULUS,
+        yield_stress=YIELD_STRESS,
+        n=N,
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_VAL,
         timesteps=TIMESTEPS,
@@ -264,8 +272,10 @@ def main(device):
         # mean_youngs=mean_youngs,
         # std_youngs=std_youngs,
     )["dataloader"]
-    data_test = dataset.elasticity(
+    data_test = dataset.ramberg_osgood(
         elastic_modulus=ELASTIC_MODULUS,
+        yield_stress=YIELD_STRESS,
+        n=N,
         batch_size=BATCH_SIZE,
         num_samples=NUM_SAMPLES_TEST,
         timesteps=TIMESTEPS,
