@@ -140,9 +140,9 @@ class LIF(torch.nn.Module):
 
             cur_out1 = self.fc1(x_timestep)
             spk_out1, mem_out1 = self.lif1(cur_out1, mem_out1)
-            cur_out2 = self.fc2(mem_out1)
+            cur_out2 = self.fc2(spk_out1)
             spk_out2, mem_out2 = self.lif2(cur_out2, mem_out2)
-            cur_out3 = self.fc3(mem_out2)
+            cur_out3 = self.fc3(spk_out2)
             spk_out3, mem_out3 = self.lif3(cur_out3, mem_out3)
 
             cur_out4 = self.fc4(mem_out3)
