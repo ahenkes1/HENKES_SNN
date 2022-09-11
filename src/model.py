@@ -168,7 +168,7 @@ class LIF(torch.nn.Module):
 
         spk_12 = torch.mean(torch.stack(spk_12, dim=0), dim=[0, 1, 2])
         spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
-        print(f"spk12: {spk_12}, spk23: {spk_23}")
+        print(f"\nspk12: {spk_12}, spk23: {spk_23}")
 
         ##########
 
@@ -176,6 +176,8 @@ class LIF(torch.nn.Module):
             "current": torch.stack(cur_out_rec, dim=0),
             "membrane_potential": torch.stack(mem_out_rec, dim=0),
             "spikes": torch.stack(spk_out_rec, dim=0),
+            "spk_12": spk_12,
+            "spk_23": spk_23,
         }
 
 
