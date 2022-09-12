@@ -1,7 +1,7 @@
 """Trainer for the spiking neural model."""
 import statistics
 import torch
-import tqdm.auto
+import tqdm
 
 
 def training(
@@ -67,7 +67,7 @@ def training(
 
     min_valid_loss = torch.inf
 
-    with tqdm.auto.trange(int(epochs)) as pbar:
+    with tqdm.trange(int(epochs)) as pbar:
         for _ in pbar:
             minibatch_counter_train = 0
             loss_epoch_train = []

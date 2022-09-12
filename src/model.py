@@ -15,7 +15,7 @@ class LIF(torch.nn.Module):
 
         spike_grad = surrogate.atan()
         reset_mechanism = "subtract"
-        learning = False
+        learning = True
         beta = 0.1
         thr = 0.1
 
