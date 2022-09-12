@@ -28,7 +28,7 @@ def convergence(
         writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
     # for hidden in [16, 32, 64, 128, 256]:
-    for hidden in [512]:
+    for hidden in [1024]:
         savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
 
         lif = model.LIF(
@@ -257,7 +257,7 @@ def main(device):
     BATCH_SIZE = 1024
     TIMESTEPS = 5
     # NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
-    NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
+    NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
     EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 5000
