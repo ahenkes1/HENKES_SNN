@@ -349,7 +349,10 @@ class LSTM(torch.nn.Module):
         out = torch.mean(input=out, dim=-1)
         out = torch.unsqueeze(input=out, dim=-1)
 
-        return {"membrane_potential": out}
+        return {
+            "membrane_potential": out,
+            "spk_23": None,
+        }
 
 
 def main():
