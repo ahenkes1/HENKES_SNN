@@ -56,22 +56,10 @@ def convergence(
                 device=device,
             )
 
-            # prediction = trainer.predict(
-            #     dataloader_test=data_test,
-            #     model=slstm,
-            #     device=device,
-            #     mean_strain=mean_strain,
-            #     std_strain=std_strain,
-            #     mean_stress=mean_stress,
-            #     std_stress=std_stress,
-            #     num_samples=PREDICTION_SIZE,
-            # )
-
             torch.save(
                 {
                     "training_hist": training_hist,
                     "testing_results": testing_results,
-                    # "prediction": prediction,
                 },
                 savepath + "save",
             )
@@ -88,20 +76,6 @@ def convergence(
             ) as file:
                 writer = csv.writer(file)
                 writer.writerow(entry)
-
-            # plt.figure(0)
-            # for i in range(PREDICTION_SIZE):
-            #     plt.plot(
-            #         prediction["strain"][:, i],
-            #         prediction["true"][:, i],
-            #         color="black",
-            #     )
-            #     plt.plot(
-            #         prediction["strain"][:, i],
-            #         prediction["prediction"][:, i],
-            #         color="red",
-            #     )
-            # plt.savefig(savepath + "prediction.png")
 
             plt.figure(1)
             plt.semilogy(training_hist["epoch_loss_train"], label="train")
@@ -203,7 +177,9 @@ def comparison(
     strain_slstm = list(zip(strain, slstm_stress))
     strain_lstm = list(zip(strain, lstm_stress))
 
-    with open(file=r"./saved_model/results_comparison.csv", mode="a") as file:
+    with open(
+        file=r"./saved_model/results_comparison_plasticity.csv", mode="a"
+    ) as file:
         writer = csv.writer(file)
         writer.writerow(
             [
@@ -325,12 +301,12 @@ def main(device):
     )["dataloader"]
 
     convergence(
-       device=device,
-       data_train=data_train,
-       data_val=data_val,
-       data_test=data_test,
-       timesteps=TIMESTEPS,
-       epochs=EPOCHS,
+        device=device,
+        data_train=data_train,
+        data_val=data_val,
+        data_test=data_test,
+        timesteps=TIMESTEPS,
+        epochs=EPOCHS,
     )
 
     comparison(
