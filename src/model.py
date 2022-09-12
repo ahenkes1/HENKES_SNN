@@ -167,19 +167,12 @@ class LIF(torch.nn.Module):
             mem_out_rec.append(mem_output)
             spk_out_rec.append(spk_out5)
 
-        ######Debug##
-
-        spk_12 = torch.mean(torch.stack(spk_12, dim=0), dim=[0, 1, 2])
         spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
-        # print(f"\nspk12: {spk_12}, spk23: {spk_23}")
-
-        ##########
 
         return {
             "current": torch.stack(cur_out_rec, dim=0),
             "membrane_potential": torch.stack(mem_out_rec, dim=0),
             "spikes": torch.stack(spk_out_rec, dim=0),
-            "spk_12": spk_12,
             "spk_23": spk_23,
         }
 
@@ -275,6 +268,7 @@ class SLSTM(torch.nn.Module):
         cur_out_rec = []
         mem_out_rec = []
         spk_out_rec = []
+        spk_23 = []
 
         for step in range(self.timesteps):
             x_timestep = x[step, :, :]
@@ -289,6 +283,8 @@ class SLSTM(torch.nn.Module):
                 spk_lstm_2, syn_lstm_3, mem_lstm_3
             )
 
+            spk_23.append(spk_lstm_2)
+
             cur_out = self.fc1(mem_lstm_3)
             spk_out, mem_out = self.lif1(cur_out, mem_out)
             cur_out2 = self.fc2(mem_out)
@@ -301,10 +297,13 @@ class SLSTM(torch.nn.Module):
             mem_out_rec.append(mem_output)
             spk_out_rec.append(spk_lstm_3)
 
+        spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
+
         return {
             "current": torch.stack(cur_out_rec, dim=0),
             "membrane_potential": torch.stack(mem_out_rec, dim=0),
             "spikes": torch.stack(spk_out_rec, dim=0),
+            "spk_23": spk_23,
         }
 
 
