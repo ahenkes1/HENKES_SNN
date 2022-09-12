@@ -351,7 +351,7 @@ class LSTM(torch.nn.Module):
 
         return {
             "membrane_potential": out,
-            "spk_23": None,
+            "spk_23": torch.as_tensor(1.0),
         }
 
 
