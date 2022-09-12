@@ -12,6 +12,11 @@ def convergence(
     data_train,
     data_val,
     data_test,
+    data_predict,
+    mean_strain,
+    std_strain,
+    mean_stress,
+    std_stress,
     timesteps,
     epochs,
 ):
@@ -23,7 +28,7 @@ def convergence(
         writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
     # for hidden in [16, 32, 64, 128, 256]:
-    for hidden in [64]:
+    for hidden in [512]:
         savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
 
         lif = model.LIF(
@@ -72,6 +77,32 @@ def convergence(
         plt.semilogy(training_hist["epoch_loss_train"], label="train")
         plt.semilogy(training_hist["epoch_loss_val"], label="val")
         plt.savefig(savepath + "loss.png")
+
+        prediction = trainer.predict(
+            dataloader_predict=data_predict,
+            model=lif,
+            device=device,
+            mean_strain=mean_strain,
+            std_strain=std_strain,
+            mean_stress=mean_stress,
+            std_stress=std_stress,
+            num_samples=1,
+        )
+
+        plt.figure(2)
+        plt.plot(prediction["strain"], prediction["true"], label="True")
+        plt.plot(prediction["strain"], prediction["prediction"], label="LIF")
+        plt.legend()
+        plt.savefig(savepath + "prediction.png")
+
+        torch.save(
+            {
+                "training_hist": training_hist,
+                "testing_results": testing_results,
+                "prediction": prediction,
+            },
+            savepath + "save",
+        )
 
     return None
 
@@ -223,15 +254,13 @@ def convergence(
 def main(device):
     """Main function for the elasticity experiment."""
     ELASTIC_MODULUS = 2.1e5
-    # BATCH_SIZE = 1024
-    BATCH_SIZE = 1
-    TIMESTEPS = 10
+    BATCH_SIZE = 1024
+    TIMESTEPS = 5
     # NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
     NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    # EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 100
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1000
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 5000
 
     data_train_dict = dataset.elasticity(
         elastic_modulus=ELASTIC_MODULUS,
@@ -279,26 +308,31 @@ def main(device):
         # mean_youngs=mean_youngs,
         # std_youngs=std_youngs,
     )["dataloader"]
-    # data_predict = dataset.elasticity(
-    # elastic_modulus=ELASTIC_MODULUS,
-    #     batch_size=1,
-    #     num_samples=1,
-    #     timesteps=TIMESTEPS,
-    #     mean_strain=mean_strain,
-    #     std_strain=std_strain,
-    #     mean_stress=mean_stress,
-    #     std_stress=std_stress,
-    #     mean_youngs=mean_youngs,
-    #     std_youngs=std_youngs,
-    # )["dataloader"]
+    data_predict = dataset.elasticity(
+        elastic_modulus=ELASTIC_MODULUS,
+        batch_size=1,
+        num_samples=1,
+        timesteps=TIMESTEPS,
+        mean_strain=mean_strain,
+        std_strain=std_strain,
+        mean_stress=mean_stress,
+        std_stress=std_stress,
+        # mean_youngs=mean_youngs,
+        # std_youngs=std_youngs,
+    )["dataloader"]
 
     convergence(
         device=device,
         data_train=data_train,
         data_val=data_val,
         data_test=data_test,
+        data_predict=data_predict,
         timesteps=TIMESTEPS,
         epochs=EPOCHS,
+        mean_strain=mean_strain,
+        mean_stress=mean_stress,
+        std_strain=std_strain,
+        std_stress=std_stress,
     )
 
     # comparison(

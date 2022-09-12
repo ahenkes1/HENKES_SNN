@@ -71,6 +71,7 @@ def training(
         for _ in pbar:
             minibatch_counter_train = 0
             loss_epoch_train = []
+            spk_rate = []
             train_batch = iter(dataloader_train)
             for feature, label in train_batch:
                 feature = torch.swapaxes(input=feature, axis0=0, axis1=1)
@@ -101,6 +102,7 @@ def training(
                 rel_err_end_train_lst.append(rel_err_end_train.item())
 
                 loss_epoch_train.append(loss_train.item())
+                spk_rate.append(out_dict["spk_23"].item())
                 minibatch_counter_train += 1
 
             minibatch_counter_val = 0
@@ -136,6 +138,8 @@ def training(
             avg_batch_loss_train = (
                 sum(loss_epoch_train) / minibatch_counter_train
             )
+            avg_batch_spk_rate = sum(spk_rate) / minibatch_counter_train
+
             avg_batch_loss_val = sum(loss_epoch_val) / minibatch_counter_val
 
             epoch_loss_train.append(avg_batch_loss_train)
@@ -144,6 +148,7 @@ def training(
             pbar.set_postfix(
                 loss_train=avg_batch_loss_train,
                 loss_val=avg_batch_loss_val,
+                spk_rate=avg_batch_spk_rate,
             )
 
             if min_valid_loss > avg_batch_loss_val:

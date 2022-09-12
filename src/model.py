@@ -15,15 +15,18 @@ class LIF(torch.nn.Module):
 
         spike_grad = surrogate.atan()
         reset_mechanism = "subtract"
+        learning = True
+        beta = 0.1
+        thr = 0.1
 
         beta_out1 = torch.rand(self.hidden)
         thr_out1 = torch.rand(self.hidden)
         self.fc1 = torch.nn.Linear(1, out_features=self.hidden)
         self.lif1 = snntorch.Leaky(
-            beta=beta_out1,
-            threshold=thr_out1,
-            learn_beta=True,
-            learn_threshold=True,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
             spike_grad=spike_grad,
             reset_mechanism=reset_mechanism,
         )
@@ -32,10 +35,10 @@ class LIF(torch.nn.Module):
         thr_out2 = torch.rand(self.hidden)
         self.fc2 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif2 = snntorch.Leaky(
-            beta=beta_out2,
-            threshold=thr_out2,
-            learn_beta=True,
-            learn_threshold=True,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
             spike_grad=spike_grad,
             reset_mechanism=reset_mechanism,
         )
@@ -44,10 +47,10 @@ class LIF(torch.nn.Module):
         thr_out3 = torch.rand(self.hidden)
         self.fc3 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif3 = snntorch.Leaky(
-            beta=beta_out3,
-            threshold=thr_out3,
-            learn_beta=True,
-            learn_threshold=True,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
             spike_grad=spike_grad,
             reset_mechanism=reset_mechanism,
         )
@@ -56,10 +59,10 @@ class LIF(torch.nn.Module):
         thr_out4 = torch.rand(self.hidden)
         self.fc4 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif4 = snntorch.Leaky(
-            beta=beta_out4,
-            threshold=thr_out4,
-            learn_beta=True,
-            learn_threshold=True,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
             spike_grad=spike_grad,
             reset_mechanism="none",
         )
@@ -68,8 +71,8 @@ class LIF(torch.nn.Module):
         thr_out5 = torch.rand(self.num_output)
         self.fc5 = torch.nn.Linear(self.hidden, out_features=self.num_output)
         self.lif5 = snntorch.Leaky(
-            beta=beta_out5,
-            threshold=thr_out5,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
             learn_beta=True,
             learn_threshold=True,
             spike_grad=spike_grad,
@@ -168,7 +171,7 @@ class LIF(torch.nn.Module):
 
         spk_12 = torch.mean(torch.stack(spk_12, dim=0), dim=[0, 1, 2])
         spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
-        print(f"\nspk12: {spk_12}, spk23: {spk_23}")
+        # print(f"\nspk12: {spk_12}, spk23: {spk_23}")
 
         ##########
 
