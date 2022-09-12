@@ -17,25 +17,22 @@ def convergence(
 ):
     """Convergence study hidden versus num outputs."""
     with open(
-        file=r"./saved_model/results_convergence_elasticity.csv", mode="a"
+        file=r"./saved_model/results_convergence_ramberg.csv", mode="a"
     ) as file:
         writer = csv.writer(file)
         writer.writerow(["hidden", "mean_rel", "mean_rel_end"])
 
-    for hidden in [16, 32, 64, 128, 256]:
-        savepath = "./saved_model/" + "hidden_" + str(hidden) + "_"
+    for hidden in [256]:
+        savepath = "./saved_model/" "RO_" + "hidden_" + str(hidden) + "_"
 
-        lif = model.LIF(
-            timesteps=timesteps, hidden=64, num_output=64
+        rlif = model.RLIF(
+            timesteps=timesteps, hidden=hidden, num_output=hidden
         ).to(device=device)
-        # lif = model.SLSTM(
-        #     timesteps=timesteps, hidden=256, num_output=64
-        # ).to(device=device)
 
         training_hist = trainer.training(
             dataloader_train=data_train,
             dataloader_val=data_val,
-            model=lif,
+            model=rlif,
             learning_rate=1e-3,
             optimizer="adamw",
             device=device,
@@ -43,11 +40,11 @@ def convergence(
             savepath=(savepath + "saved_model.pth"),
         )
 
-        lif.load_state_dict(torch.load(savepath + "saved_model.pth"))
+        rlif.load_state_dict(torch.load(savepath + "saved_model.pth"))
 
         testing_results = trainer.test(
             dataloader_test=data_test,
-            model=lif,
+            model=rlif,
             device=device,
         )
 
@@ -65,7 +62,7 @@ def convergence(
             testing_results["mean_rel_err_end_test"],
         ]
         with open(
-            file=r"./saved_model/results_convergence_elasticity.csv", mode="a"
+            file=r"./saved_model/results_convergence_ramberg.csv", mode="a"
         ) as file:
             writer = csv.writer(file)
             writer.writerow(entry)
@@ -227,12 +224,12 @@ def main(device):
     YIELD_STRESS = 300
     N = 5
     ELASTIC_MODULUS = 2.1e5
-    BATCH_SIZE = 1024
-    TIMESTEPS = 10
-    NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
+    BATCH_SIZE = 1
+    TIMESTEPS = 25
+    NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 1000
 
     data_train_dict = dataset.ramberg_osgood(
         elastic_modulus=ELASTIC_MODULUS,

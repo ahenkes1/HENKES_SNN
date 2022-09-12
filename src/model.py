@@ -4,6 +4,142 @@ from snntorch import surrogate
 import torch
 
 
+class RLIF(torch.nn.Module):
+    """Simple spiking neural network in snntorch."""
+
+    def __init__(self, timesteps, hidden, num_output):
+        super().__init__()
+        self.timesteps = timesteps
+        self.hidden = hidden
+        self.num_output = num_output
+
+        spike_grad = surrogate.atan()
+        reset_mechanism = "subtract"
+        learning = True
+        beta = 0.1
+        v = 0.1
+        thr = 0.1
+
+        self.fc1 = torch.nn.Linear(1, out_features=self.hidden)
+        self.rlif1 = snntorch.RLeaky(
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            V=torch.ones(self.hidden) * v,
+            learn_V=learning,
+            learn_beta=learning,
+            learn_threshold=learning,
+            spike_grad=spike_grad,
+            reset_mechanism=reset_mechanism,
+        )
+
+        self.fc2 = torch.nn.Linear(self.hidden, out_features=self.hidden)
+        self.rlif2 = snntorch.RLeaky(
+            V=torch.ones(self.hidden) * v,
+            learn_V=learning,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
+            spike_grad=spike_grad,
+            reset_mechanism=reset_mechanism,
+        )
+
+        self.fc3 = torch.nn.Linear(self.hidden, out_features=self.hidden)
+        self.rlif3 = snntorch.RLeaky(
+            V=torch.ones(self.hidden) * v,
+            learn_V=learning,
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
+            spike_grad=spike_grad,
+            reset_mechanism=reset_mechanism,
+        )
+
+        self.fc4 = torch.nn.Linear(self.hidden, out_features=self.hidden)
+        self.lif4 = snntorch.Leaky(
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=learning,
+            learn_threshold=learning,
+            spike_grad=spike_grad,
+            reset_mechanism="none",
+        )
+
+        self.fc5 = torch.nn.Linear(self.hidden, out_features=self.num_output)
+        self.lif5 = snntorch.Leaky(
+            beta=torch.ones(self.hidden) * beta,
+            threshold=torch.ones(self.hidden) * thr,
+            learn_beta=True,
+            learn_threshold=True,
+            spike_grad=spike_grad,
+            reset_mechanism="none",
+        )
+
+        params = sum(param.numel() for param in self.parameters())
+        space = 20
+        print(
+            f"{79 * '='}\n"
+            f"{' ':<20}{'LIF':^39}{' ':>20}\n"
+            f"{79 * '-'}\n"
+            f"{'Snntorch:':<{space}}{snntorch.__version__}\n"
+            f"{'Timesteps:':<{space}}{self.timesteps}\n"
+            f"{'Parameters:':<{space}}{params}\n"
+            f"{'Topology:':<{space}}\n{self}\n"
+            f"{79 * '='}"
+        )
+
+    def forward(self, x):
+        """Forward pass for several time steps."""
+
+        spk_out_1, mem_out1 = self.rlif1.init_rleaky()
+        spk_out_2, mem_out2 = self.rlif2.init_rleaky()
+        spk_out_3, mem_out3 = self.rlif3.init_rleaky()
+
+        mem_out4 = self.lif4.init_leaky()
+        mem_out5 = self.lif5.init_leaky()
+
+        cur_out_rec = []
+        mem_out_rec = []
+        spk_out_rec = []
+        spk_12 = []
+        spk_23 = []
+
+        for step in range(self.timesteps):
+            x_timestep = x[step, :, :]
+
+            cur_out1 = self.fc1(x_timestep)
+            spk_out1, mem_out1 = self.rlif1(cur_out1, spk_out_1, mem_out1)
+            cur_out2 = self.fc2(spk_out1)
+            spk_out2, mem_out2 = self.rlif2(cur_out2, spk_out_2, mem_out2)
+            cur_out3 = self.fc3(spk_out2)
+            spk_out3, mem_out3 = self.rlif3(cur_out3, spk_out_3, mem_out3)
+
+            spk_12.append(spk_out1)
+            spk_23.append(spk_out2)
+
+            cur_out4 = self.fc4(mem_out3)
+            spk_out4, mem_out4 = self.lif4(cur_out4, mem_out4)
+            cur_out5 = self.fc5(mem_out4)
+            spk_out5, mem_out5 = self.lif5(cur_out5, mem_out5)
+
+            mem_output = torch.mean(input=mem_out5, dim=-1)
+            mem_output = torch.unsqueeze(input=mem_output, dim=-1)
+
+            cur_out_rec.append(cur_out5)
+            mem_out_rec.append(mem_output)
+            spk_out_rec.append(spk_out5)
+
+        spk_23 = torch.mean(torch.stack(spk_23, dim=0), dim=[0, 1, 2])
+
+        return {
+            "current": torch.stack(cur_out_rec, dim=0),
+            "membrane_potential": torch.stack(mem_out_rec, dim=0),
+            "spikes": torch.stack(spk_out_rec, dim=0),
+            "spk_23": spk_23,
+        }
+
+
 class LIF(torch.nn.Module):
     """Simple spiking neural network in snntorch."""
 
@@ -19,8 +155,6 @@ class LIF(torch.nn.Module):
         beta = 0.1
         thr = 0.1
 
-        beta_out1 = torch.rand(self.hidden)
-        thr_out1 = torch.rand(self.hidden)
         self.fc1 = torch.nn.Linear(1, out_features=self.hidden)
         self.lif1 = snntorch.Leaky(
             beta=torch.ones(self.hidden) * beta,
@@ -31,8 +165,6 @@ class LIF(torch.nn.Module):
             reset_mechanism=reset_mechanism,
         )
 
-        beta_out2 = torch.rand(self.hidden)
-        thr_out2 = torch.rand(self.hidden)
         self.fc2 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif2 = snntorch.Leaky(
             beta=torch.ones(self.hidden) * beta,
@@ -43,8 +175,6 @@ class LIF(torch.nn.Module):
             reset_mechanism=reset_mechanism,
         )
 
-        beta_out3 = torch.rand(self.hidden)
-        thr_out3 = torch.rand(self.hidden)
         self.fc3 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif3 = snntorch.Leaky(
             beta=torch.ones(self.hidden) * beta,
@@ -55,8 +185,6 @@ class LIF(torch.nn.Module):
             reset_mechanism=reset_mechanism,
         )
 
-        beta_out4 = torch.rand(self.hidden)
-        thr_out4 = torch.rand(self.hidden)
         self.fc4 = torch.nn.Linear(self.hidden, out_features=self.hidden)
         self.lif4 = snntorch.Leaky(
             beta=torch.ones(self.hidden) * beta,
@@ -67,8 +195,6 @@ class LIF(torch.nn.Module):
             reset_mechanism="none",
         )
 
-        beta_out5 = torch.rand(self.num_output)
-        thr_out5 = torch.rand(self.num_output)
         self.fc5 = torch.nn.Linear(self.hidden, out_features=self.num_output)
         self.lif5 = snntorch.Leaky(
             beta=torch.ones(self.hidden) * beta,
@@ -78,36 +204,6 @@ class LIF(torch.nn.Module):
             spike_grad=spike_grad,
             reset_mechanism="none",
         )
-
-        # DEBUG
-        # alpha_d1 = torch.rand(self.num_output)
-        # beta_d1 = torch.rand(self.num_output)
-        # thr_d1 = torch.rand(self.num_output)
-        # self.fcd1 = torch.nn.Linear(1, self.num_output)
-        # self.syn1 = snntorch.Synaptic(
-        #     alpha=alpha_d1,
-        #     beta=beta_d1,
-        #     threshold=thr_d1,
-        #     learn_alpha=True,
-        #     learn_beta=True,
-        #     learn_threshold=True,
-        #     spike_grad=spike_grad,
-        #     reset_mechanism=reset_mechanism,
-        # )
-        # alpha_d2 = torch.rand(self.num_output)
-        # beta_d2 = torch.rand(self.num_output)
-        # thr_d2 = torch.rand(self.num_output)
-        # self.fcd2 = torch.nn.Linear(self.hidden, self.num_output)
-        # self.syn2 = snntorch.Synaptic(
-        #     alpha=alpha_d2,
-        #     beta=beta_d2,
-        #     threshold=thr_d2,
-        #     learn_alpha=True,
-        #     learn_beta=True,
-        #     learn_threshold=True,
-        #     spike_grad=spike_grad,
-        #     reset_mechanism=reset_mechanism,
-        # )
 
         params = sum(param.numel() for param in self.parameters())
         space = 20
@@ -131,9 +227,6 @@ class LIF(torch.nn.Module):
         mem_out4 = self.lif4.init_leaky()
         mem_out5 = self.lif5.init_leaky()
 
-        # synd1, memd1 = self.syn1.init_synaptic()
-        # synd2, memd2 = self.syn2.init_synaptic()
-
         cur_out_rec = []
         mem_out_rec = []
         spk_out_rec = []
@@ -150,10 +243,8 @@ class LIF(torch.nn.Module):
             cur_out3 = self.fc3(spk_out2)
             spk_out3, mem_out3 = self.lif3(cur_out3, mem_out3)
 
-            # DEBUG
             spk_12.append(spk_out1)
             spk_23.append(spk_out2)
-            ##########################
 
             cur_out4 = self.fc4(mem_out3)
             spk_out4, mem_out4 = self.lif4(cur_out4, mem_out4)

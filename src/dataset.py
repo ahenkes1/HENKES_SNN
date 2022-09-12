@@ -224,6 +224,15 @@ class Regression_dataset(torch.utils.data.Dataset):
                 self.mean_stress = mean_stress
                 self.std_stress = std_stress
 
+            else:
+                print("Using pre-defined mean and std!")
+
+            strain_norm = (strain_lst - self.mean_strain) / self.std_strain
+            stress_norm = (stress_lst - self.mean_stress) / self.std_stress
+
+            self.features = strain_norm
+            self.labels = stress_norm
+
         elif mode == "elasticity":
 
             # modulus_lst = []

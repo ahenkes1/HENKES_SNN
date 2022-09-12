@@ -9,6 +9,7 @@ import random
 import torch
 
 import experiment_elasticity
+import experiment_ramberg_osgood
 import experiment_plasticity
 
 
@@ -38,9 +39,8 @@ def get_input():
 
     parser.add_argument(
         "--example",
-        default="elasticity",
         type=str,
-        choices=["elasticity", "plasticity"],
+        choices=["elasticity", "ramberg-osgood", "plasticity"],
         help="Execute the numerical examples from the paper",
     )
     arguments = parser.parse_args()
@@ -59,11 +59,18 @@ def main(parser_args=None):
     if EXAMPLE == "elasticity":
         experiment_elasticity.main(device=DEVICE)
 
+    elif EXAMPLE == "ramberg-osgood":
+        experiment_ramberg_osgood.main(device=DEVICE)
+
     elif EXAMPLE == "plasticity":
         experiment_plasticity.main(device=DEVICE)
 
     else:
-        raise NotImplementedError("This experiment does not exist.")
+        raise NotImplementedError(
+            "This experiment does not exist. Please "
+            "choose an experiment using the "
+            "'--example' flag"
+        )
 
     return None
 
