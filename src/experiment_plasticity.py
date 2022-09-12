@@ -199,9 +199,6 @@ def comparison(
             lstm_test_end = testing_results["mean_rel_err_end_test"]
             lstm_stress = prediction["prediction"].tolist()
 
-    # strain = reduce(lambda x, y: x + y, strain)
-    # stress = reduce(lambda x, y: x + y, stress)
-
     strain_stress = list(zip(strain, stress))
     strain_slstm = list(zip(strain, slstm_stress))
     strain_lstm = list(zip(strain, lstm_stress))
@@ -327,14 +324,14 @@ def main(device):
         std_stress=std_stress,
     )["dataloader"]
 
-    # convergence(
-    #    device=device,
-    #    data_train=data_train,
-    #    data_val=data_val,
-    #    data_test=data_test,
-    #    timesteps=TIMESTEPS,
-    #    epochs=EPOCHS,
-    # )
+    convergence(
+       device=device,
+       data_train=data_train,
+       data_val=data_val,
+       data_test=data_test,
+       timesteps=TIMESTEPS,
+       epochs=EPOCHS,
+    )
 
     comparison(
         device=device,
