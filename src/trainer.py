@@ -234,14 +234,15 @@ def predict(
     model,
     device,
     dataloader_predict,
-    mean_strain,
-    std_strain,
     mean_stress,
     std_stress,
     num_samples,
+    mean_strain=None,
+    std_strain=None,
+    mean_yield=None,
+    std_yield=None,
 ):
     """Carry out predictions with model on data."""
-
     space = 20
     print(
         f"{79 * '='}\n"
@@ -250,21 +251,31 @@ def predict(
     )
 
     test_batch = iter(dataloader_predict)
-    strain_norm, stress_norm = next(test_batch)
 
-    strain_norm = strain_norm[0:num_samples, :, :]
+    if mean_yield is not None:
+        yield_norm, stress_norm = next(test_batch)
+        yield_norm = yield_norm[0:num_samples, :, :]
+
+    elif mean_yield is None:
+        strain_norm, stress_norm = next(test_batch)
+        strain_norm = strain_norm[0:num_samples, :, :]
+
+        if len(strain_norm.shape) == 2:
+            strain_norm = torch.unsqueeze(strain_norm, 0)
+            stress_norm = torch.unsqueeze(stress_norm, 0)
+
     stress_norm = stress_norm[0:num_samples, :, :]
-
-    if len(strain_norm.shape) == 2:
-        strain_norm = torch.unsqueeze(strain_norm, 0)
-        stress_norm = torch.unsqueeze(stress_norm, 0)
-
     stress = (stress_norm * std_stress) + mean_stress
 
     with torch.no_grad():
         model.eval()
 
-        feature = torch.swapaxes(input=strain_norm, axis0=0, axis1=1)
+        if mean_yield is None:
+            feature = torch.swapaxes(input=strain_norm, axis0=0, axis1=1)
+        elif mean_yield is not None:
+            feature = torch.swapaxes(input=yield_norm, axis0=0, axis1=1)
+        else:
+            raise SystemExit("ERROR IN PREDICTION!")
         label = torch.swapaxes(input=stress, axis0=0, axis1=1)
 
         feature = feature.to(device)
@@ -274,9 +285,16 @@ def predict(
         mem = out_dict["membrane_potential"]
 
     prediction = (mem * std_stress) + mean_stress
-    strain = (feature * std_strain) + mean_strain
+    if mean_yield is None:
+        feature = (strain_norm * std_strain) + mean_strain
+    elif mean_yield is not None:
+        feature = torch.linspace(
+            start=0.0, end=1e-2, steps=prediction.size()[0]
+        )
+    else:
+        raise SystemExit("ERROR IN PREDICTION!")
 
-    feature = torch.squeeze(strain).cpu().numpy()
+    feature = torch.squeeze(feature).cpu().numpy()
     label = torch.squeeze(label).cpu().numpy()
     prediction = torch.squeeze(prediction).cpu().numpy()
 
