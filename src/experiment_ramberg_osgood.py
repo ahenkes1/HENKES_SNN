@@ -65,8 +65,8 @@ def convergence(
             std_yield=std_yield,
         )["dataloader"]
         data_predict = dataset.ramberg_osgood(
-            batch_size=1,
-            num_samples=1,
+            batch_size=5,
+            num_samples=5,
             timesteps=timesteps,
             mean_strain=mean_strain,
             std_strain=std_strain,
@@ -122,14 +122,23 @@ def convergence(
             std_stress=std_stress,
             mean_yield=mean_yield,
             std_yield=mean_yield,
-            num_samples=1,
+            num_samples=5,
         )
         plt.close(1)
 
         plt.figure(2)
-        plt.plot(prediction["strain"], prediction["true"], label="True")
-        plt.plot(prediction["strain"], prediction["prediction"], label="LIF")
-        plt.legend()
+        for i in range(5):
+            plt.plot(
+                prediction["strain"][:, i],
+                prediction["true"][:, i],
+                label="True",
+            )
+            plt.plot(
+                prediction["strain"][:, i],
+                prediction["prediction"][:, i],
+                label="LIF",
+            )
+            plt.legend()
         plt.savefig(savepath + "prediction.png")
 
         torch.save(
@@ -142,51 +151,52 @@ def convergence(
         )
         plt.close(2)
 
-        strain = prediction["strain"].tolist()
-        stress = prediction["true"].tolist()
-        slstm_stress = prediction["prediction"].tolist()
-        strain_stress = list(zip(strain, stress))
-        strain_rlif = list(zip(strain, slstm_stress))
+        for i in range(5):
+            strain = prediction["strain"][:, i].tolist()
+            stress = prediction["true"][:, i].tolist()
+            slstm_stress = prediction["prediction"][:, i].tolist()
+            strain_stress = list(zip(strain, stress))
+            strain_rlif = list(zip(strain, slstm_stress))
 
-        with open(
-            file=r"./saved_model/results_convergence_ramberg.csv", mode="a"
-        ) as file:
-            writer = csv.writer(file)
-            writer.writerow(
-                [
-                    "timesteps",
-                    "mean_rel_err_test",
-                    "mean_rel_err_end_test",
-                ]
-            )
-            writer.writerow(
-                [
-                    str(timesteps),
-                    testing_results["mean_rel_err_test"],
-                    testing_results["mean_rel_err_end_test"],
-                ]
-            )
-            writer.writerow(
-                [
-                    "Strain-Stress",
-                ]
-            )
-            writer.writerow(
-                [
-                    strain_stress,
-                ]
-            )
-            writer.writerow(
-                [
-                    "Strain-RLIF",
-                ]
-            )
-            writer.writerow(
-                [
-                    strain_rlif,
-                ]
-            )
-            writer.writerow([])
+            with open(
+                file=r"./saved_model/results_convergence_ramberg.csv", mode="a"
+            ) as file:
+                writer = csv.writer(file)
+                writer.writerow(
+                    [
+                        "timesteps",
+                        "mean_rel_err_test",
+                        "mean_rel_err_end_test",
+                    ]
+                )
+                writer.writerow(
+                    [
+                        str(timesteps),
+                        testing_results["mean_rel_err_test"],
+                        testing_results["mean_rel_err_end_test"],
+                    ]
+                )
+                writer.writerow(
+                    [
+                        "Strain-Stress",
+                    ]
+                )
+                writer.writerow(
+                    [
+                        strain_stress,
+                    ]
+                )
+                writer.writerow(
+                    [
+                        "Strain-RLIF",
+                    ]
+                )
+                writer.writerow(
+                    [
+                        strain_rlif,
+                    ]
+                )
+                writer.writerow([])
 
     return None
 

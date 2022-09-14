@@ -291,6 +291,8 @@ def predict(
         feature = torch.linspace(
             start=0.0, end=1e-2, steps=prediction.size()[0]
         )
+        feature = torch.unsqueeze(feature, dim=-1)
+        feature = torch.repeat_interleave(feature, repeats=num_samples, dim=1)
     else:
         raise SystemExit("ERROR IN PREDICTION!")
 
