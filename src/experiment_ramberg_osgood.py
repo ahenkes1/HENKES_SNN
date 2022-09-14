@@ -205,10 +205,10 @@ def main(device):
     """Main function for the Ramberg-Osgood experiment."""
     BATCH_SIZE = 1024
     TIMESTEPS = 20
-    NUM_SAMPLES_TRAIN = BATCH_SIZE * 10
+    NUM_SAMPLES_TRAIN = BATCH_SIZE * 1
     NUM_SAMPLES_VAL = BATCH_SIZE
     NUM_SAMPLES_TEST = NUM_SAMPLES_VAL
-    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 500
+    EPOCHS = NUM_SAMPLES_TRAIN // BATCH_SIZE * 5000
 
     convergence(
         timesteps=TIMESTEPS,
@@ -218,7 +218,7 @@ def main(device):
         num_samples_train=NUM_SAMPLES_TRAIN,
         num_samples_val=NUM_SAMPLES_VAL,
         num_samples_test=NUM_SAMPLES_TEST,
-        hidden=256,
+        hidden=512,
     )
 
     return None
