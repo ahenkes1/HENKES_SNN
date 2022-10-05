@@ -180,6 +180,10 @@ def test(model, device, dataloader_test):
     rel_err_test = []
     rel_err_end_test = []
 
+    histo_all = []
+    histo_end = []
+    pred_true = []
+
     space = 20
     print(f"{79 * '='}\n" f"{' ':<20}{'Testing':^39}{' ':>20}\n" f"{79 * '-'}")
 
@@ -198,14 +202,37 @@ def test(model, device, dataloader_test):
             out_dict = model(feature)
             mem = out_dict["membrane_potential"]
 
+            pred_true_array = (
+                (
+                    torch.concat(
+                        [
+                            torch.unsqueeze(mem.flatten(), -1),
+                            torch.unsqueeze(label.flatten(), -1),
+                        ],
+                        dim=-1,
+                    )
+                )
+                .to("cpu")
+                .numpy()
+            )
+            pred_true.append(pred_true_array)
+
             rel_err = torch.linalg.norm(
                 (mem - label), dim=-1
             ) / torch.linalg.norm(label, dim=-1)
+
+            histo_all.append(torch.mean(rel_err, 0).to("cpu").numpy())
+            max_error_all = torch.max(torch.mean(rel_err, 0))
+
             rel_err = torch.mean(rel_err[1:, :])
 
             rel_err_end = torch.linalg.norm(
                 (mem[-1, :, :] - label[-1, :, :]), dim=-1
             ) / torch.linalg.norm(label[-1, :, :], dim=-1)
+
+            histo_end.append(rel_err_end.to("cpu").numpy())
+            max_error_end = torch.max(rel_err_end)
+
             rel_err_end = torch.mean(rel_err_end)
 
             loss_val_L1 = loss_function_L1(mem, label)
@@ -213,6 +240,8 @@ def test(model, device, dataloader_test):
             loss_test_L1.append(loss_val_L1.item())
             rel_err_test.append(rel_err.item())
             rel_err_end_test.append(rel_err_end.item())
+            max_error_all = max_error_all.item()
+            max_error_end = max_error_end.item()
 
         mean_L1 = statistics.mean(loss_test_L1)
         mean_rel = statistics.mean(rel_err_test)
@@ -220,13 +249,18 @@ def test(model, device, dataloader_test):
 
     print(f"{'Mean L1-loss:':<{space}}{mean_L1:1.2e}")
     print(f"{'Mean rel. err:':<{space}}{mean_rel:1.2e}")
+    print(f"{'Max rel. err:':<{space}}{max_error_all:1.2e}")
     print(f"{'Mean rel. err end:':<{space}}{mean_rel_end:1.2e}")
+    print(f"{'Max rel. err end:':<{space}}{max_error_end:1.2e}")
     print(f"{79 * '='}")
 
     return {
         "mean_loss_test_l1": mean_L1,
         "mean_rel_err_test": mean_rel,
         "mean_rel_err_end_test": mean_rel_end,
+        "pred_true": pred_true,
+        "histo_all": histo_all,
+        "histo_end": histo_end,
     }
 
 
