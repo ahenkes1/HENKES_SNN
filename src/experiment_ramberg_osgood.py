@@ -88,13 +88,12 @@ def check(
             device=device,
         )
 
-        plt.figure(0)
-        hist_all = testing_results['histo_all'][0]
-        hist_end = testing_results['histo_end'][0]
+        hist_all = testing_results["histo_all"][0]
+        hist_end = testing_results["histo_end"][0]
 
         hist_all_counts, hist_all_bins = np.histogram(hist_all)
         hist_end_counts, hist_end_bins = np.histogram(hist_end)
-        
+
         hist_all_counts = hist_all_counts.tolist()
         hist_all_bins = hist_all_bins.tolist()
 
@@ -102,16 +101,23 @@ def check(
         print(hist_all_bins)
         print(hist_all_counts)
 
-        plt.show()
-        plt.close(1)
-        raise SystemExit()
+        import pprint
+
+        pprint.pprint(
+            list(zip(np.linspace(1, 1024, 1024, dtype=int), testing_results[
+                "histo_all"][0].tolist()))
+        )
+        plt.figure(0)
+        plt.scatter(
+            np.linspace(0, 1024, 1024), testing_results["histo_all"][0]
+        )
 
         plt.figure(1)
         pred_true = testing_results["pred_true"][0]
         plt.scatter(pred_true[:, 0], pred_true[:, 1])
         plt.show()
-        plt.close(1)
 
+        raise SystemExit()
         prediction = trainer.predict(
             dataloader_predict=data_predict,
             model=rlif,
