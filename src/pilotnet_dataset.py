@@ -8,7 +8,6 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset
 
-
 class PilotNetDataset(Dataset):
     """PilotNet dataset class that preserver temporal continuity. Returns
     images and ground truth values when the object is indexed.
