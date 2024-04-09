@@ -17,5 +17,3 @@ Please cite the following paper:
       year={2024},
       publisher={Royal Society Publishing}
     }
-
-... and the code using the CITATION.cff file.
