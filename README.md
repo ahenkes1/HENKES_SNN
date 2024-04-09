@@ -1,21 +1,21 @@
-# HENKES_GAN
+# HENKES_SNN
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxx.svg)](https://doi.org/10.5281/zenodo.xxx)
 
-Code of the publication "xxx" published in 
-https://doi.org/xxx by 
-Alexander Henkes and Henning Wessels from TU Braunschweig.
+Code of the publication "Spiking neural networks for nonlinear regression" published in 
+https://doi.org/10.1098/rsos.231606 by 
+Alexander Henkes from ETH Zürich, Jason K. Eshraghian from University of California, Santa Cruz and Henning Wessels from TU Braunschweig.
 
 Please cite the following paper:
 
-    @article{xxx,
-      title={xxx},
-      author={Henkes, Alexander and Wessels, Henning},
-      journal={xxx},
-      volume={xxx},
-      pages={xxx},
-      year={xxx},
-      publisher={Elsevier}
+    @article{henkes_snn,
+      title={Spiking neural networks for nonlinear regression},
+      author={Henkes, Alexander, Eshraghian, Jason K. and Wessels, Henning},
+      journal={R. Soc. Open Sci.},
+      volume={11},
+      pages={231606},
+      year={2024},
+      publisher={Royal Society Publishing}
     }
 
 ... and the code using the CITATION.cff file.
